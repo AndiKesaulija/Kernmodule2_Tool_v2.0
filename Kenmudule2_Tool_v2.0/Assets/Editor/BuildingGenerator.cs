@@ -23,6 +23,7 @@ public class BuildingGenerator : EditorWindow
     public static int y = 1;
     public static int z = 3;
 
+    
     private int[,,] buildingArray = new int[x,y,z];
 
     private GameObject[,,] objectArray = new GameObject[x, y, z];
@@ -142,19 +143,48 @@ public class BuildingGenerator : EditorWindow
         {
             selectedGridPoint = CastRay();
 
-            if(CheckSelected() == true)
+
+            for (int i = 0; i < x; i++)
             {
-                if(tempBuilding != null)
+                for (int j = 0; j < y; j++)
                 {
-                    Instantiate(objectGeneratorTiles[selectedBuilding], selectedGridPoint.transform.position, Quaternion.Euler(0, 0, 0), tempBuilding.transform);
+                    for (int k = 0; k < z; k++)
+                    {
 
-                }
-                else
-                {
-                    tempBuilding = new GameObject("TempBuilding");
+                       if (objectArray[i, j, k] == selectedGridPoint)
+                        {
+                            Debug.Log(objectArray[i,j,k]);
+                            objectArray[i, j, k] = objectGeneratorTiles[1] as GameObject;
 
+                            DestroyImmediate(selectedGridPoint.gameObject);
+                            objectArray[i, j, k] = Instantiate(objectArray[i, j, k], new Vector3(i, j, k), Quaternion.Euler(0, 0, 0), tempBuilding.transform);
+                        }
+
+                    }
                 }
             }
+
+            //foreach(GameObject tile in objectArray)
+            //{
+            //    if(tile == selectedGridPoint)
+            //    {
+
+            //        Debug.Log(objectArray.);
+            //    }
+            //}
+            //if(CheckSelected() == true)
+            //{
+            //    if(tempBuilding != null)
+            //    {
+            //        Instantiate(objectGeneratorTiles[selectedBuilding], selectedGridPoint.transform.position, Quaternion.Euler(0, 0, 0), tempBuilding.transform);
+
+            //    }
+            //    else
+            //    {
+            //        tempBuilding = new GameObject("TempBuilding");
+
+            //    }
+            //}
         }
     }
     GameObject CastRay()
@@ -190,14 +220,18 @@ public class BuildingGenerator : EditorWindow
     }
     private void GenerateGridObject()
     {
+        
         if (tempBuilding == null)
         {
             tempBuilding = new GameObject("TempBuilding");
         }
+        else
+        {
+            Object.DestroyImmediate(tempBuilding);
+            tempBuilding = new GameObject("TempBuilding");
+        }
 
-        objectArray[0, 0, 0] = objectGeneratorTiles[1] as GameObject;
-        objectArray[1, 0, 0] = objectGeneratorTiles[1] as GameObject;
-        objectArray[2, 0, 0] = objectGeneratorTiles[1] as GameObject;
+        
 
         for (int i = 0; i < x; i++)
         {
@@ -206,7 +240,18 @@ public class BuildingGenerator : EditorWindow
                 for (int k = 0; k < z; k++)
                 {
 
-                    Instantiate(objectArray[i,j,k], new Vector3(i, j, k), Quaternion.Euler(0, 0, 0), tempBuilding.transform);
+                    //GameObject Tile = new GameObject("" + objectArray[i, j, k].name);
+                    //Tile.transform.position = new Vector3(i, j, k);
+                    //Tile.transform.rotation = Quaternion.Euler(0, 0, 0);
+                    //Tile.transform.parent = tempBuilding.transform;
+                    Debug.Log(objectArray[i, j, k]);
+                    if(objectArray[i, j, k] != null)
+                    {
+                        objectArray[i, j, k] = Instantiate(objectArray[i, j, k], new Vector3(i, j, k), Quaternion.Euler(0, 0, 0), tempBuilding.transform);
+
+                    }
+                   
+
                     //Instantiate(objectGeneratorTiles[0], new Vector3(i, j, k), Quaternion.Euler(0, 0, 0), tempBuilding.transform);
 
                 }
@@ -227,6 +272,8 @@ public class BuildingGenerator : EditorWindow
         //tempBuilding = parentObject;
 
     }
+
+    
 
     private void SaveObject()
     {
