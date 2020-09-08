@@ -19,14 +19,21 @@ public class BuildingGenerator : EditorWindow
     private List<bool> selectedTile = new List<bool>();
     private int selectedBuilding;
 
-    public static int x = 3;
-    public static int y = 1;
-    public static int z = 3;
+    public int gridX = 3;
+    public int gridY = 1;
+    public int gridZ = 3;
 
-    
-    private int[,,] buildingArray = new int[x,y,z];
+    private int activeLevel = 0;
 
-    private GameObject[,,] objectArray = new GameObject[x, y, z];
+
+    //private int[,,] buildingArray = new int[x,y,z];
+
+    private GameObject[,,] objectArray;
+    private GameObject[][][] tempArray;
+
+    private Vector2 scrollPosition = Vector2.zero;
+
+    private Material selectedMaterial;
     private void OnEnable()
     {
         SceneView.duringSceneGui += OnSceneGUI;
@@ -35,18 +42,7 @@ public class BuildingGenerator : EditorWindow
 
         objectGeneratorTiles = myMapMakerWindow.objectTiles;
 
-        for(int i=0; i < x; i++)
-        {
-            for (int j = 0; j < y; j++)
-            {
-                for (int k = 0; k < z; k++)
-                {
-                    objectArray[i, j, k] = objectGeneratorTiles[0] as GameObject;
-                }
-            }
-        }
-        
-
+        selectedMaterial = Resources.Load<Material>("Material/SelectedObject.mat");
     }
     private void OnDisable()
     {
@@ -63,17 +59,6 @@ public class BuildingGenerator : EditorWindow
     }
     private void OnGUI()
     {
-
-        //foreach (Object obj in objectGeneratorTiles)
-        //{
-        //    EditorGUILayout.ObjectField(obj, typeof(Object), true);
-        //}
-
-
-        GUILayout.Label("Object Window");
-
-        EditorGUILayout.ObjectField(tempBuilding, typeof(Object), true);
-
         GUILayout.Label("Object Window");
         if (selectedGridPoint!= null)
         {
@@ -106,25 +91,54 @@ public class BuildingGenerator : EditorWindow
         }
 
 
-        if (GUI.Button(new Rect(10, 300, 300, 20), "Generate Tile"))
+        gridX = EditorGUILayout.IntField(gridX);
+        //gridY = EditorGUILayout.IntField(1);
+        gridZ = EditorGUILayout.IntField(gridZ);
+
+
+
+        if (GUI.Button(new Rect(290, 280, 20, 20), "^"))
         {
-            if (tempGrid != null)
+            activeLevel += 1;
+
+            if(activeLevel > gridY - 1)
             {
-                DestroyImmediate(tempGrid);
-            }
-            if (tempBuilding != null)
-            {
-                DestroyImmediate(tempBuilding);
+                gridY = gridY + 1;
+                
+                GenerateGridObject(gridX, gridY, gridZ, objectArray);
+                Reset();
 
             }
-
-            GenerateGridObject();
 
         }
-        if (GUI.Button(new Rect(10, 320, 300, 20), "Save Building"))
+        if (GUI.Button(new Rect(290, 300, 20, 20), "v"))
         {
-            SaveObject();
+            activeLevel -= 1;
+            //GenerateGridObject(gridX, gridY, gridZ);
         }
+
+        if (GUI.Button(new Rect(10, 300, 280, 20), "Generate Tile"))
+        {
+            activeLevel = 0;
+            gridY = 1;
+            Reset();
+            GenerateGridObject(gridX, gridY, gridZ, null);
+        }
+        if (GUI.Button(new Rect(10, 320, 280, 20), "Save Building"))
+        {
+            SaveObject("TempName");
+        }
+        if (objectArray != null)
+        {
+            scrollPosition = GUI.BeginScrollView(new Rect(10, 350, 280, 300), scrollPosition, new Rect(0, 0, 200, 700));
+            foreach (Object obj in objectArray)
+            {
+                EditorGUILayout.ObjectField(obj, typeof(Object), true);
+            }
+
+            GUI.EndScrollView();
+        }
+       
 
     }
     public void OnSceneGUI(SceneView scene)
@@ -144,47 +158,51 @@ public class BuildingGenerator : EditorWindow
             selectedGridPoint = CastRay();
 
 
-            for (int i = 0; i < x; i++)
+            for (int i = 0; i < gridX; i++)
             {
-                for (int j = 0; j < y; j++)
+                for (int j = 0; j < gridY; j++)
                 {
-                    for (int k = 0; k < z; k++)
+                    for (int k = 0; k < gridZ; k++)
                     {
+                        //Debug.Log(selectedGridPoint);
+                        //Debug.Log(objectArray[i, j, k]);
 
-                       if (objectArray[i, j, k] == selectedGridPoint)
+                        if (selectedGridPoint != null && objectArray[i, j, k] == selectedGridPoint)
                         {
-                            Debug.Log(objectArray[i,j,k]);
-                            objectArray[i, j, k] = objectGeneratorTiles[1] as GameObject;
+                            Debug.Log(objectArray[i,j,k] + "  -  " + objectGeneratorTiles[selectedBuilding]);
+                            //objectArray[i, j, k] = new GameObject("Empty");
+                            
 
-                            DestroyImmediate(selectedGridPoint.gameObject);
-                            objectArray[i, j, k] = Instantiate(objectArray[i, j, k], new Vector3(i, j, k), Quaternion.Euler(0, 0, 0), tempBuilding.transform);
+                            if(objectArray[i, j, k].name != objectGeneratorTiles[selectedBuilding].name)
+                            {
+                                DestroyImmediate(selectedGridPoint.gameObject);
+                                objectArray[i, j, k] = objectGeneratorTiles[selectedBuilding] as GameObject;
+
+                                objectArray[i, j, k] = PrefabUtility.InstantiatePrefab(objectArray[i, j, k]) as GameObject;
+                                objectArray[i, j, k].transform.position = new Vector3(i, j, k);
+                                objectArray[i, j, k].transform.rotation = Quaternion.Euler(0, 0, 0);
+                                //objectArray[i, j, k].transform.parent = buildingfloor.transform;
+                            }
+
+                            //selectedGridPoint.GetComponent<Renderer>().material = selectedMaterial;
+                            ////selected Object
+                            //objectArray[i, j, k] = objectGeneratorTiles[selectedBuilding] as GameObject;
+
+                            ////Replace Object with selected Object
+                            //DestroyImmediate(selectedGridPoint.gameObject);
+                            ////objectArray[i, j, k] = Instantiate(objectArray[i, j, k], new Vector3(i, activeLevel, k), Quaternion.Euler(0, 0, 0), tempBuilding.transform);
+                            //selectedGridPoint = null;
+                        }
+                        else
+                        {
+                            //Debug.Log("activeLevel: " + activeLevel);
                         }
 
                     }
                 }
             }
 
-            //foreach(GameObject tile in objectArray)
-            //{
-            //    if(tile == selectedGridPoint)
-            //    {
-
-            //        Debug.Log(objectArray.);
-            //    }
-            //}
-            //if(CheckSelected() == true)
-            //{
-            //    if(tempBuilding != null)
-            //    {
-            //        Instantiate(objectGeneratorTiles[selectedBuilding], selectedGridPoint.transform.position, Quaternion.Euler(0, 0, 0), tempBuilding.transform);
-
-            //    }
-            //    else
-            //    {
-            //        tempBuilding = new GameObject("TempBuilding");
-
-            //    }
-            //}
+            
         }
     }
     GameObject CastRay()
@@ -192,10 +210,6 @@ public class BuildingGenerator : EditorWindow
         Event curr = Event.current;
         Ray mouseRay = HandleUtility.GUIPointToWorldRay(curr.mousePosition);
         RaycastHit hit;
-
-        float drawPlaneHeight = 0;//y axis change if needed
-        float dstToDrawPlane = (drawPlaneHeight - mouseRay.origin.y) / mouseRay.direction.y;
-        Vector3 mousePosition = mouseRay.GetPoint(dstToDrawPlane);
 
         if (Physics.Raycast(mouseRay, out hit))
         {
@@ -218,9 +232,121 @@ public class BuildingGenerator : EditorWindow
         }
         return false;
     }
-    private void GenerateGridObject()
+    private void GenerateGridObject(int sizeX, int sizeY, int sizeZ, GameObject[,,] temp)
     {
+
+        GameObject[,,] tempArray = temp;
+
+        //Debug.Log(tempArray[0].le);
+
+
+        if (temp == null)
+        {
+            objectArray = new GameObject[sizeX, sizeY, sizeZ];
+        }
+        else
+        {
+            objectArray = new GameObject[sizeX, sizeY, sizeZ];
+            
+
+            for (int i = 0; i < sizeX; i++)
+            {
+
+                for (int j = 0; j < sizeY; j++)
+                {
+
+                    for (int k = 0; k < sizeZ; k++)
+                    {
+                       
+                        
+                        //objectArray[i, j, k] = tempArray[i, j, k];
+                    }
+                }
+            }
+            
+        }
         
+
+        GameObject buildingfloor = new GameObject("Floor" + activeLevel);
+        buildingfloor.transform.parent = tempBuilding.transform;
+
+        for (int i = 0; i < sizeX; i++)
+        {
+            for (int j = 0; j < sizeY; j++)
+            {
+                for (int k = 0; k < sizeZ; k++)
+                {
+                    if (objectArray[i, j, k] == null)
+                    {
+                        objectArray[i, j, k] = objectGeneratorTiles[0] as GameObject;
+                    }
+
+                    objectArray[i, j, k] = PrefabUtility.InstantiatePrefab(objectArray[i, j, k]) as GameObject;
+                    objectArray[i, j, k].transform.position = new Vector3(i, j, k);
+                    objectArray[i, j, k].transform.rotation = Quaternion.Euler(0, 0, 0);
+                    objectArray[i, j, k].transform.parent = buildingfloor.transform;
+
+                    //GameObject tile = PrefabUtility.InstantiatePrefab(objectArray[i, j, k]) as GameObject;
+
+                    //GameObject tile = new GameObject();
+                    //tile = objectArray[i, j, k] as GameObject;
+
+                    //tile.transform.position = new Vector3(i, j, k);
+                    //tile.transform.rotation = Quaternion.Euler(0, 0, 0);
+                    //tile.transform.parent = buildingfloor.transform;
+
+                    //if (objectArray[i, j, k] == null)
+                    //{
+
+                    //    objectArray[i, j, k] = objectGeneratorTiles[0] as GameObject;
+                    //    //objectArray[i, j, k] = Instantiate(objectArray[i, j, k], new Vector3(i, j, k), Quaternion.Euler(0, 0, 0), buildingfloor.transform);
+                    //    Instantiate(objectArray[i, j, k], new Vector3(i, j, k), Quaternion.Euler(0, 0, 0), buildingfloor.transform);
+                    //}
+                    //else
+                    //{
+                    //    //objectArray[i, j, k] = Instantiate(objectArray[i, j, k], new Vector3(i, j, k), Quaternion.Euler(0, 0, 0), buildingfloor.transform);
+                    //    Instantiate(objectArray[i, j, k], new Vector3(i, j, k), Quaternion.Euler(0, 0, 0), buildingfloor.transform);
+                    //}
+                    //Debug.Log(objectArray.Length);
+
+
+                }
+            }
+        }
+    }
+
+    
+
+    private void SaveObject(string buildingName)
+    {
+        //myMapMakerWindow.generatedObjects.Add(tempBuilding);
+        //PrefabUtility.CreatePrefab("Assets/Resources/Buildings", tempBuilding);
+
+        if (CheckObjectList(buildingName)== true)
+        {
+            PrefabUtility.SaveAsPrefabAsset(tempBuilding, "Assets/Resources/Prefabs/Buildings/" + buildingName + ".prefab");
+        }
+        else
+        {
+            myMapMakerWindow.generatedObjects.Add(PrefabUtility.SaveAsPrefabAsset(tempBuilding, "Assets/Resources/Prefabs/Buildings/" + buildingName + ".prefab"));
+        }
+        this.Close();
+    }
+
+    private bool CheckObjectList(string name)
+    {
+        foreach (GameObject building in myMapMakerWindow.generatedObjects)
+        {
+            if (building.name == name)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    private void Reset()
+    {
+        //gridY = 1;
         if (tempBuilding == null)
         {
             tempBuilding = new GameObject("TempBuilding");
@@ -230,57 +356,6 @@ public class BuildingGenerator : EditorWindow
             Object.DestroyImmediate(tempBuilding);
             tempBuilding = new GameObject("TempBuilding");
         }
-
-        
-
-        for (int i = 0; i < x; i++)
-        {
-            for (int j = 0; j < y; j++)
-            {
-                for (int k = 0; k < z; k++)
-                {
-
-                    //GameObject Tile = new GameObject("" + objectArray[i, j, k].name);
-                    //Tile.transform.position = new Vector3(i, j, k);
-                    //Tile.transform.rotation = Quaternion.Euler(0, 0, 0);
-                    //Tile.transform.parent = tempBuilding.transform;
-                    Debug.Log(objectArray[i, j, k]);
-                    if(objectArray[i, j, k] != null)
-                    {
-                        objectArray[i, j, k] = Instantiate(objectArray[i, j, k], new Vector3(i, j, k), Quaternion.Euler(0, 0, 0), tempBuilding.transform);
-
-                    }
-                   
-
-                    //Instantiate(objectGeneratorTiles[0], new Vector3(i, j, k), Quaternion.Euler(0, 0, 0), tempBuilding.transform);
-
-                }
-            }
-        }
-
-
-
-        //tempGrid = new GameObject("TempGrid");
-        //tempGrid.transform.position = new Vector3(0, 0, 0);
-
-
-        //for (int i = 0; i < columLength * rowLength; i++)
-        //{
-        //    Instantiate(objectGeneratorTiles[2], new Vector3(1 * (i % columLength), 0, 1 * (i / columLength)), Quaternion.Euler(0, 0, 0), tempGrid.transform);
-        //}
-
-        //tempBuilding = parentObject;
-
-    }
-
-    
-
-    private void SaveObject()
-    {
-        myMapMakerWindow.generatedObjects.Add(tempBuilding);
-        
-        
-        this.Close();
     }
 }
 
