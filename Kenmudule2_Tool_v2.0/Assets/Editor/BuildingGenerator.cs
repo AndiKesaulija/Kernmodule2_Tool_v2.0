@@ -29,7 +29,7 @@ public class BuildingGenerator : EditorWindow
     //private int[,,] buildingArray = new int[x,y,z];
 
     private GameObject[,,] objectArray;
-    private GameObject[][][] tempArray;
+    //private GameObject[,,] tempArray;
 
     private Vector2 scrollPosition = Vector2.zero;
 
@@ -99,14 +99,14 @@ public class BuildingGenerator : EditorWindow
 
         if (GUI.Button(new Rect(290, 280, 20, 20), "^"))
         {
-            activeLevel += 1;
 
-            if(activeLevel > gridY - 1)
+            if(activeLevel <= gridY - 1)
             {
-                gridY = gridY + 1;
-                
+                activeLevel += 1;
+                gridY += 1;
+
+                //Reset();
                 GenerateGridObject(gridX, gridY, gridZ, objectArray);
-                Reset();
 
             }
 
@@ -169,40 +169,22 @@ public class BuildingGenerator : EditorWindow
 
                         if (selectedGridPoint != null && objectArray[i, j, k] == selectedGridPoint)
                         {
-                            Debug.Log(objectArray[i,j,k] + "  -  " + objectGeneratorTiles[selectedBuilding]);
-                            //objectArray[i, j, k] = new GameObject("Empty");
-                            
 
                             if(objectArray[i, j, k].name != objectGeneratorTiles[selectedBuilding].name)
                             {
                                 DestroyImmediate(selectedGridPoint.gameObject);
                                 objectArray[i, j, k] = objectGeneratorTiles[selectedBuilding] as GameObject;
 
-                                objectArray[i, j, k] = PrefabUtility.InstantiatePrefab(objectArray[i, j, k]) as GameObject;
-                                objectArray[i, j, k].transform.position = new Vector3(i, j, k);
-                                objectArray[i, j, k].transform.rotation = Quaternion.Euler(0, 0, 0);
-                                //objectArray[i, j, k].transform.parent = buildingfloor.transform;
+
+                                //objectArray[i, j, k] = PrefabUtility.InstantiatePrefab(objectArray[i, j, k]) as GameObject;
+                                //objectArray[i, j, k].transform.position = new Vector3(i, j, k);
+                                //objectArray[i, j, k].transform.rotation = Quaternion.Euler(0, 0, 0);
+                                //objectArray[i, j, k].transform.parent = tempBuilding.transform;
                             }
-
-                            //selectedGridPoint.GetComponent<Renderer>().material = selectedMaterial;
-                            ////selected Object
-                            //objectArray[i, j, k] = objectGeneratorTiles[selectedBuilding] as GameObject;
-
-                            ////Replace Object with selected Object
-                            //DestroyImmediate(selectedGridPoint.gameObject);
-                            ////objectArray[i, j, k] = Instantiate(objectArray[i, j, k], new Vector3(i, activeLevel, k), Quaternion.Euler(0, 0, 0), tempBuilding.transform);
-                            //selectedGridPoint = null;
                         }
-                        else
-                        {
-                            //Debug.Log("activeLevel: " + activeLevel);
-                        }
-
                     }
                 }
             }
-
-            
         }
     }
     GameObject CastRay()
@@ -234,41 +216,8 @@ public class BuildingGenerator : EditorWindow
     }
     private void GenerateGridObject(int sizeX, int sizeY, int sizeZ, GameObject[,,] temp)
     {
-
-        GameObject[,,] tempArray = temp;
-
-        //Debug.Log(tempArray[0].le);
-
-
-        if (temp == null)
-        {
-            objectArray = new GameObject[sizeX, sizeY, sizeZ];
-        }
-        else
-        {
-            objectArray = new GameObject[sizeX, sizeY, sizeZ];
-            
-
-            for (int i = 0; i < sizeX; i++)
-            {
-
-                for (int j = 0; j < sizeY; j++)
-                {
-
-                    for (int k = 0; k < sizeZ; k++)
-                    {
-                       
-                        
-                        //objectArray[i, j, k] = tempArray[i, j, k];
-                    }
-                }
-            }
-            
-        }
+        objectArray = new GameObject[sizeX, sizeY, sizeZ];
         
-
-        GameObject buildingfloor = new GameObject("Floor" + activeLevel);
-        buildingfloor.transform.parent = tempBuilding.transform;
 
         for (int i = 0; i < sizeX; i++)
         {
@@ -276,46 +225,49 @@ public class BuildingGenerator : EditorWindow
             {
                 for (int k = 0; k < sizeZ; k++)
                 {
-                    if (objectArray[i, j, k] == null)
+                    try
                     {
-                        objectArray[i, j, k] = objectGeneratorTiles[0] as GameObject;
+                        objectArray[i, j, k] = temp[i, j, k];
+                        for (int t = 0; t < objectGeneratorTiles.Count; t++)
+                        {
+                            if(temp[i, j, k].name == objectGeneratorTiles[t].name)
+                            {
+                                objectArray[i, j, k] = objectGeneratorTiles[t] as GameObject;
+                            }
+                        }
+                        Debug.Log(objectArray[i, j, k]);
                     }
-
-                    objectArray[i, j, k] = PrefabUtility.InstantiatePrefab(objectArray[i, j, k]) as GameObject;
-                    objectArray[i, j, k].transform.position = new Vector3(i, j, k);
-                    objectArray[i, j, k].transform.rotation = Quaternion.Euler(0, 0, 0);
-                    objectArray[i, j, k].transform.parent = buildingfloor.transform;
-
-                    //GameObject tile = PrefabUtility.InstantiatePrefab(objectArray[i, j, k]) as GameObject;
-
-                    //GameObject tile = new GameObject();
-                    //tile = objectArray[i, j, k] as GameObject;
-
-                    //tile.transform.position = new Vector3(i, j, k);
-                    //tile.transform.rotation = Quaternion.Euler(0, 0, 0);
-                    //tile.transform.parent = buildingfloor.transform;
-
-                    //if (objectArray[i, j, k] == null)
-                    //{
-
-                    //    objectArray[i, j, k] = objectGeneratorTiles[0] as GameObject;
-                    //    //objectArray[i, j, k] = Instantiate(objectArray[i, j, k], new Vector3(i, j, k), Quaternion.Euler(0, 0, 0), buildingfloor.transform);
-                    //    Instantiate(objectArray[i, j, k], new Vector3(i, j, k), Quaternion.Euler(0, 0, 0), buildingfloor.transform);
-                    //}
-                    //else
-                    //{
-                    //    //objectArray[i, j, k] = Instantiate(objectArray[i, j, k], new Vector3(i, j, k), Quaternion.Euler(0, 0, 0), buildingfloor.transform);
-                    //    Instantiate(objectArray[i, j, k], new Vector3(i, j, k), Quaternion.Euler(0, 0, 0), buildingfloor.transform);
-                    //}
-                    //Debug.Log(objectArray.Length);
-
-
+                    catch (System.Exception)
+                    {
+                        Debug.Log("NoObjectInTemp");
+                    }
+                    PlaceObject(i, j, k, tempBuilding);
                 }
             }
         }
     }
 
-    
+    private void PlaceObject(int i, int j, int k, GameObject parent)
+    {
+        if (objectArray[i, j, k] == null)
+        {
+            objectArray[i, j, k] = objectGeneratorTiles[0] as GameObject;
+            objectArray[i, j, k] = PrefabUtility.InstantiatePrefab(objectArray[i, j, k], parent.transform) as GameObject;
+            objectArray[i, j, k].transform.position = new Vector3(i, j, k);
+            objectArray[i, j, k].transform.rotation = Quaternion.Euler(0, 0, 0);
+        }
+        else
+        {
+            objectArray[i, j, k] = PrefabUtility.InstantiatePrefab(objectArray[i, j, k], parent.transform) as GameObject;
+            objectArray[i, j, k].transform.position = new Vector3(i, j, k);
+            objectArray[i, j, k].transform.rotation = Quaternion.Euler(0, 0, 0);
+        }
+
+        
+        //objectArray[i, j, k].transform.parent = parent.transform;
+    }
+
+
 
     private void SaveObject(string buildingName)
     {
