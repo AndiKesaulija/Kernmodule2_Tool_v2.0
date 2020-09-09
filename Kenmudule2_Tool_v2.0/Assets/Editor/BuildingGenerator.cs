@@ -5,7 +5,8 @@ using UnityEditor;
 
 public class BuildingGenerator : EditorWindow
 {
-    
+    private MapMaker myMapMakerWindow;
+
     public List<Object> objectGeneratorTiles;
     private GameObject tempGrid;
     private GameObject selectedGridPoint;
@@ -14,7 +15,6 @@ public class BuildingGenerator : EditorWindow
     private int columLength = 3;
     private int rowLength = 3;
 
-    private MapMaker myMapMakerWindow;
 
     private List<bool> selectedTile = new List<bool>();
     private int selectedBuilding;
@@ -27,7 +27,7 @@ public class BuildingGenerator : EditorWindow
 
 
     //private int[,,] buildingArray = new int[x,y,z];
-
+    private List<List<List<GameObject>>> myObjectList = new List<List<List<GameObject>>>();
     private GameObject[,,] objectArray;
     //private GameObject[,,] tempArray;
 
@@ -55,7 +55,6 @@ public class BuildingGenerator : EditorWindow
             DestroyImmediate(tempBuilding);
 
         }
-        AssetDatabase.Refresh();
     }
     private void OnGUI()
     {
@@ -99,29 +98,34 @@ public class BuildingGenerator : EditorWindow
 
         if (GUI.Button(new Rect(290, 280, 20, 20), "^"))
         {
+            Reset();
+            //activeLevel += 1;
+            gridY += 1;
+            GenerateGridObject(gridX, gridY, gridZ, objectArray);
 
-            if(activeLevel <= gridY - 1)
+
+            if (activeLevel > gridY -1)
             {
-                activeLevel += 1;
-                gridY += 1;
+                
 
-                //Reset();
-                GenerateGridObject(gridX, gridY, gridZ, objectArray);
-
+                
             }
+            
+
 
         }
         if (GUI.Button(new Rect(290, 300, 20, 20), "v"))
         {
             activeLevel -= 1;
-            //GenerateGridObject(gridX, gridY, gridZ);
+            Debug.Log(activeLevel);
+
         }
 
         if (GUI.Button(new Rect(10, 300, 280, 20), "Generate Tile"))
         {
             activeLevel = 0;
             gridY = 1;
-            Reset();
+            //Reset();
             GenerateGridObject(gridX, gridY, gridZ, null);
         }
         if (GUI.Button(new Rect(10, 320, 280, 20), "Save Building"))
@@ -157,29 +161,32 @@ public class BuildingGenerator : EditorWindow
         {
             selectedGridPoint = CastRay();
 
-
             for (int i = 0; i < gridX; i++)
             {
                 for (int j = 0; j < gridY; j++)
                 {
                     for (int k = 0; k < gridZ; k++)
                     {
-                        //Debug.Log(selectedGridPoint);
-                        //Debug.Log(objectArray[i, j, k]);
-
                         if (selectedGridPoint != null && objectArray[i, j, k] == selectedGridPoint)
                         {
+                            Debug.Log("Array: " + i + "," + j +"," + k + " Name: " + objectArray[i, j, k].name);
 
-                            if(objectArray[i, j, k].name != objectGeneratorTiles[selectedBuilding].name)
+                            if (objectArray[i, j, k].name != objectGeneratorTiles[selectedBuilding].name)
                             {
+                                Debug.Log(i + " " + j + " " + k);
+
                                 DestroyImmediate(selectedGridPoint.gameObject);
+
                                 objectArray[i, j, k] = objectGeneratorTiles[selectedBuilding] as GameObject;
+                                PlaceObject(i, j, k, tempBuilding);
 
-
+                                //Debug.Log("NewTile:" + objectGeneratorTiles[selectedBuilding].name);
                                 //objectArray[i, j, k] = PrefabUtility.InstantiatePrefab(objectArray[i, j, k]) as GameObject;
                                 //objectArray[i, j, k].transform.position = new Vector3(i, j, k);
                                 //objectArray[i, j, k].transform.rotation = Quaternion.Euler(0, 0, 0);
                                 //objectArray[i, j, k].transform.parent = tempBuilding.transform;
+
+                                selectedGridPoint = null;
                             }
                         }
                     }
@@ -217,7 +224,15 @@ public class BuildingGenerator : EditorWindow
     private void GenerateGridObject(int sizeX, int sizeY, int sizeZ, GameObject[,,] temp)
     {
         objectArray = new GameObject[sizeX, sizeY, sizeZ];
-        
+
+        Debug.Log(temp?.Length);
+
+        if (temp!= null)
+        {
+        Debug.Log(temp[0,0,0]);
+        }
+
+        Debug.Log(objectArray.Length);
 
         for (int i = 0; i < sizeX; i++)
         {
@@ -227,7 +242,10 @@ public class BuildingGenerator : EditorWindow
                 {
                     try
                     {
+                        
                         objectArray[i, j, k] = temp[i, j, k];
+                        Debug.Log("Copy");
+
                         for (int t = 0; t < objectGeneratorTiles.Count; t++)
                         {
                             if(temp[i, j, k].name == objectGeneratorTiles[t].name)
@@ -235,16 +253,22 @@ public class BuildingGenerator : EditorWindow
                                 objectArray[i, j, k] = objectGeneratorTiles[t] as GameObject;
                             }
                         }
-                        Debug.Log(objectArray[i, j, k]);
                     }
                     catch (System.Exception)
                     {
-                        Debug.Log("NoObjectInTemp");
+                        //Debug.Log("Failed");
                     }
-                    PlaceObject(i, j, k, tempBuilding);
+                    if(objectArray[i,j,k] == null)
+                    {
+                        PlaceObject(i, j, k, tempBuilding);
+
+                    }
+
                 }
             }
         }
+
+        //Debug.Log(objectArray.Length);
     }
 
     private void PlaceObject(int i, int j, int k, GameObject parent)
@@ -252,18 +276,13 @@ public class BuildingGenerator : EditorWindow
         if (objectArray[i, j, k] == null)
         {
             objectArray[i, j, k] = objectGeneratorTiles[0] as GameObject;
-            objectArray[i, j, k] = PrefabUtility.InstantiatePrefab(objectArray[i, j, k], parent.transform) as GameObject;
-            objectArray[i, j, k].transform.position = new Vector3(i, j, k);
-            objectArray[i, j, k].transform.rotation = Quaternion.Euler(0, 0, 0);
-        }
-        else
-        {
-            objectArray[i, j, k] = PrefabUtility.InstantiatePrefab(objectArray[i, j, k], parent.transform) as GameObject;
-            objectArray[i, j, k].transform.position = new Vector3(i, j, k);
-            objectArray[i, j, k].transform.rotation = Quaternion.Euler(0, 0, 0);
         }
 
-        
+        objectArray[i, j, k] = PrefabUtility.InstantiatePrefab(objectArray[i, j, k], parent.transform) as GameObject;
+        objectArray[i, j, k].transform.position = new Vector3(i, j, k);
+        objectArray[i, j, k].transform.rotation = Quaternion.Euler(0, 0, 0);
+
+
         //objectArray[i, j, k].transform.parent = parent.transform;
     }
 
