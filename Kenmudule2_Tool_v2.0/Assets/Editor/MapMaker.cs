@@ -4,12 +4,15 @@ using UnityEngine;
 using UnityEditor;
 
 public class MapMaker : EditorWindow
-
 {
+    private EventHandler myEventHandler = new EventHandler();
+
     public List<Object> objectTiles = new List<Object>();
     public List<GameObject> generatedObjects = new List<GameObject>();
+    private List<bool> selectedBuilding =  new List<bool>();
+    
+    private int building;
 
-    private List<SerializedObjectData> placedObjects;
     private Vector2 scrollPosition = Vector2.zero;
 
     [MenuItem("Window/MapMaker")]
@@ -21,12 +24,20 @@ public class MapMaker : EditorWindow
 
     public void OnEnable()
     {
+        SceneView.duringSceneGui += OnSceneGUI;
+
         objectTiles.Clear();
         Object[] myTiles = Resources.LoadAll("Prefabs/Tiles");
+        generatedObjects.Clear();
+        Object[] myBuildings = Resources.LoadAll("Prefabs/Buildings");
 
-        foreach(Object foundObject in myTiles)
+        foreach (Object foundObject in myTiles)
         {
             objectTiles.Add(foundObject);
+        }
+        foreach (Object foundObject in myBuildings)
+        {
+            generatedObjects.Add(foundObject as GameObject);
         }
     }
     public void OnDisable()
@@ -40,28 +51,45 @@ public class MapMaker : EditorWindow
 
     public void OnGUI()
     {
-        if (GUI.Button(new Rect(10, 10, 300, 20),"Generate Object"))
+        if (GUI.Button(new Rect(10, 80, 300, 20),"Generate Object"))
         {
             GetWindow(typeof(BuildingGenerator));
         }
-        if (GUI.Button(new Rect(10, 30, 300, 20), "Clear List"))
+        if (GUI.Button(new Rect(10, 110, 300, 20), "Clear List"))
         {
             generatedObjects.Clear();
         }
 
-        scrollPosition = GUI.BeginScrollView(new Rect(10, 50, 400, 600), scrollPosition, new Rect(0, 0, 220, 200));
-        foreach (Object obj in generatedObjects)
+        if (generatedObjects != null)
         {
-            EditorGUILayout.ObjectField(obj, typeof(Object), true);
-        }
+            for (int i = 0; i < generatedObjects.Count; i++)
+            {
+                selectedBuilding.Add(false);
+                selectedBuilding[i] = GUILayout.Toggle(selectedBuilding[i], "" + generatedObjects[i].name, "Button");
 
-        GUI.EndScrollView();
+                if (selectedBuilding[i])
+                {
+                    if (building != i)
+                    {
+                        building = i;
+                        for (int k = 0; k < generatedObjects.Count; k++)
+                        {
+                            if (k != i)
+                            {
+                                selectedBuilding[k] = false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
     }
 
-    public void OnSceneGUI(SceneView sceneView)
+    public void OnSceneGUI(SceneView scene)
     {
-
+        HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive));
+        myEventHandler.MouseEvent(Event.current, generatedObjects[0], myEventHandler.CastRay());
     }
 
     private void PlaceBuilding(GameObject selectedObject, Vector3 myPosition, Vector3 myRotation)

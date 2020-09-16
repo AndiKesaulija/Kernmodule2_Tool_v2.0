@@ -6,78 +6,57 @@ using UnityEditor;
 public class BuildingGenerator : EditorWindow
 {
     private MapMaker myMapMakerWindow;
+    private TileHandler myTileHandler = new TileHandler();
 
-    public List<Object> objectGeneratorTiles;
+    private GameObject PreviewTile;
+    private GameObject tempName;
+
     private GameObject tempGrid;
-    private GameObject selectedGridPoint;
     private GameObject tempBuilding;
 
-    private int columLength = 3;
-    private int rowLength = 3;
-
-
     private List<bool> selectedTile = new List<bool>();
+    private Object mySelectedTile;
+
+    private bool GroupEnabled = false;
+
     private int selectedBuilding;
 
-    public int gridX = 3;
-    public int gridY = 1;
-    public int gridZ = 3;
+    private bool mouseDown;
 
-    private int activeLevel = 0;
-
-
-    //private int[,,] buildingArray = new int[x,y,z];
-    private List<List<List<GameObject>>> myObjectList = new List<List<List<GameObject>>>();
-    private GameObject[,,] objectArray;
-    //private GameObject[,,] tempArray;
+    public int gridSize = 5;
+    public int gridZ = 5;
 
     private Vector2 scrollPosition = Vector2.zero;
 
-    private Material selectedMaterial;
     private void OnEnable()
     {
         SceneView.duringSceneGui += OnSceneGUI;
 
         myMapMakerWindow = GetWindow<MapMaker>();
+        GenerateGridObject(gridSize);
 
-        objectGeneratorTiles = myMapMakerWindow.objectTiles;
 
-        selectedMaterial = Resources.Load<Material>("Material/SelectedObject.mat");
     }
     private void OnDisable()
     {
-        if (tempGrid != null)
-        {
-            DestroyImmediate(tempGrid);
-        }
-        if(tempBuilding != null)
-        {
-            DestroyImmediate(tempBuilding);
-
-        }
+        ResetBuilding();
     }
     private void OnGUI()
     {
         GUILayout.Label("Object Window");
-        if (selectedGridPoint!= null)
+        if (myMapMakerWindow.objectTiles != null)
         {
-            GUILayout.Label("Selected Grid Object: " + selectedGridPoint.name);
-
-        }
-
-        if (objectGeneratorTiles != null)
-        {
-            for (int i = 0; i < objectGeneratorTiles.Count; i++)
+            for (int i = 0; i < myMapMakerWindow.objectTiles.Count; i++)
             {
                 selectedTile.Add(false);
-                selectedTile[i] = GUILayout.Toggle(selectedTile[i], "" + objectGeneratorTiles[i].name, "Button");
+                selectedTile[i] = GUILayout.Toggle(selectedTile[i], "" + myMapMakerWindow.objectTiles[i].name, "Button");
 
                 if (selectedTile[i])
                 {
                     if (selectedBuilding != i)
                     {
                         selectedBuilding = i;
-                        for (int k = 0; k < objectGeneratorTiles.Count; k++)
+                        for (int k = 0; k < myMapMakerWindow.objectTiles.Count; k++)
                         {
                             if (k != i)
                             {
@@ -89,55 +68,24 @@ public class BuildingGenerator : EditorWindow
             }
         }
 
+        //Temp
+        gridSize = EditorGUILayout.IntField(gridSize);
 
-        gridX = EditorGUILayout.IntField(gridX);
-        //gridY = EditorGUILayout.IntField(1);
-        gridZ = EditorGUILayout.IntField(gridZ);
-
-
-
-        if (GUI.Button(new Rect(290, 280, 20, 20), "^"))
+        if (GUI.Button(new Rect(10, 300, 280, 20), "Generate new grid"))
         {
-            Reset();
-            //activeLevel += 1;
-            gridY += 1;
-            GenerateGridObject(gridX, gridY, gridZ, objectArray);
-
-
-            if (activeLevel > gridY -1)
-            {
-                
-
-                
-            }
-            
-
-
-        }
-        if (GUI.Button(new Rect(290, 300, 20, 20), "v"))
-        {
-            activeLevel -= 1;
-            Debug.Log(activeLevel);
-
-        }
-
-        if (GUI.Button(new Rect(10, 300, 280, 20), "Generate Tile"))
-        {
-            activeLevel = 0;
-            gridY = 1;
-            //Reset();
-            GenerateGridObject(gridX, gridY, gridZ, null);
+            GenerateGridObject(gridSize);
         }
         if (GUI.Button(new Rect(10, 320, 280, 20), "Save Building"))
         {
             SaveObject("TempName");
         }
-        if (objectArray != null)
+        if (myMapMakerWindow.objectTiles != null)
         {
             scrollPosition = GUI.BeginScrollView(new Rect(10, 350, 280, 300), scrollPosition, new Rect(0, 0, 200, 700));
-            foreach (Object obj in objectArray)
+            foreach (GameObject tile in myMapMakerWindow.objectTiles)
             {
-                EditorGUILayout.ObjectField(obj, typeof(Object), true);
+                
+                EditorGUILayout.ObjectField(tile, typeof(string), true);
             }
 
             GUI.EndScrollView();
@@ -150,148 +98,145 @@ public class BuildingGenerator : EditorWindow
         HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive));
     
         MouseEvent(Event.current);
+        
 
-       
     }
 
     void MouseEvent(Event e)
     {
-        //LeftMouseDown
-        if (e.button == 0 && e.isMouse && e.type == EventType.MouseDown)
+        bool CheckSelected()
         {
-            selectedGridPoint = CastRay();
-
-            for (int i = 0; i < gridX; i++)
+            foreach (bool check in selectedTile)
             {
-                for (int j = 0; j < gridY; j++)
+
+                if (check == true)
                 {
-                    for (int k = 0; k < gridZ; k++)
+                    if (mySelectedTile != null)
                     {
-                        if (selectedGridPoint != null && objectArray[i, j, k] == selectedGridPoint)
+                        if (mySelectedTile != myMapMakerWindow.objectTiles[selectedBuilding])
                         {
-                            Debug.Log("Array: " + i + "," + j +"," + k + " Name: " + objectArray[i, j, k].name);
-
-                            if (objectArray[i, j, k].name != objectGeneratorTiles[selectedBuilding].name)
-                            {
-                                Debug.Log(i + " " + j + " " + k);
-
-                                DestroyImmediate(selectedGridPoint.gameObject);
-
-                                objectArray[i, j, k] = objectGeneratorTiles[selectedBuilding] as GameObject;
-                                PlaceObject(i, j, k, tempBuilding);
-
-                                //Debug.Log("NewTile:" + objectGeneratorTiles[selectedBuilding].name);
-                                //objectArray[i, j, k] = PrefabUtility.InstantiatePrefab(objectArray[i, j, k]) as GameObject;
-                                //objectArray[i, j, k].transform.position = new Vector3(i, j, k);
-                                //objectArray[i, j, k].transform.rotation = Quaternion.Euler(0, 0, 0);
-                                //objectArray[i, j, k].transform.parent = tempBuilding.transform;
-
-                                selectedGridPoint = null;
-                            }
+                            DestroyImmediate(PreviewTile);
+                            mySelectedTile = myMapMakerWindow.objectTiles[selectedBuilding];
+                            PreviewTile = Instantiate(mySelectedTile) as GameObject;
                         }
                     }
+                    else
+                    {
+                        mySelectedTile = myMapMakerWindow.objectTiles[selectedBuilding];
+                        PreviewTile = Instantiate(mySelectedTile) as GameObject;
+                    }
+                    return true;
                 }
             }
+            if (PreviewTile != null)
+            {
+                DestroyImmediate(PreviewTile);
+            }
+            return false;
+        }
+
+        if (CheckSelected() == true)
+        {
+            if (PreviewTile != null && mouseDown == false)
+            {
+                myTileHandler.HandlePreviewPos(PreviewTile, TilePos());
+            }
+
+            //LeftMouseDown
+            if (mouseDown == false && e.button == 0 && e.isMouse && e.type == EventType.MouseDown)
+            {
+                PreviewTile.SetActive(false);
+                tempName = myTileHandler.PlaceObject(myMapMakerWindow.objectTiles[selectedBuilding] as GameObject, TilePos(), tempBuilding);
+                mouseDown = true;
+
+
+            }
+            //LeftMouseDrag
+            if (mouseDown == true && e.type == EventType.MouseDrag)
+            {
+                Debug.Log("Drag");
+                myTileHandler.HandlePreviewRot(tempName, tempName.transform.position, CastRay());
+                
+            }
+            //LeftMouseUp
+            if (mouseDown == true && e.button == 0 && e.isMouse && e.type == EventType.MouseUp)
+            {
+                PreviewTile.SetActive(true);
+                mouseDown = false;
+                //myTileHandler.PlaceObject(myMapMakerWindow.objectTiles[selectedBuilding] as GameObject, ObjectPos(), tempBuilding);
+
+            }
+
         }
     }
-    GameObject CastRay()
+    Vector3 TilePos()
     {
         Event curr = Event.current;
-        Ray mouseRay = HandleUtility.GUIPointToWorldRay(curr.mousePosition);
+        Ray mouseRay = HandleUtility.GUIPointToWorldRay(curr.mousePosition);  
         RaycastHit hit;
+
+        GameObject myPrefab = myMapMakerWindow.objectTiles[selectedBuilding] as GameObject;
 
         if (Physics.Raycast(mouseRay, out hit))
         {
             if (hit.collider != null)
             {
-                return hit.collider.gameObject;
+                Vector3 myPos = hit.collider.transform.position;
+                myPos = myPos + new Vector3(0, hit.collider.transform.localScale.y / 2, 0);
+                myPos = myPos + new Vector3(0, myPrefab.transform.localScale.y / 2, 0);
+
+                return myPos;
             }
         }
-        return null;
+        return Vector3.zero;
+    }  //Cast ray from scenecamera to point in 3d scene(look at math)
+    Vector3 CastRay()
+    {
+        Event curr = Event.current;
+        Ray mouseRay = HandleUtility.GUIPointToWorldRay(curr.mousePosition);
+        float drawPlaneHeight = 0;//y axis change if needed
+        float dstToDrawPlane = (drawPlaneHeight - mouseRay.origin.y) / mouseRay.direction.y;
+        Vector3 mousePosition = mouseRay.GetPoint(dstToDrawPlane);
+
+        return mousePosition;
     }  //Cast ray from scenecamera to point in 3d scene(look at math)
 
-    bool CheckSelected()
+   
+    private void GenerateGridObject(int Size)
     {
-        foreach(bool check in selectedTile)
+        ResetBuilding();
+        PreviewTile = new GameObject("Preview");
+        tempGrid = new GameObject("Temp Grid");
+        tempBuilding = new GameObject("Temp Building");
+        GameObject gridTile = Resources.Load("Prefabs/MapMaker/GridTile") as GameObject;
+
+        for (int i = 0; i < Size; i++)
         {
-            if (check == true)
+            for (int k = 0; k < Size; k++)
             {
-                return true;
-            }
-        }
-        return false;
-    }
-    private void GenerateGridObject(int sizeX, int sizeY, int sizeZ, GameObject[,,] temp)
-    {
-        objectArray = new GameObject[sizeX, sizeY, sizeZ];
-
-        Debug.Log(temp?.Length);
-
-        if (temp!= null)
-        {
-        Debug.Log(temp[0,0,0]);
-        }
-
-        Debug.Log(objectArray.Length);
-
-        for (int i = 0; i < sizeX; i++)
-        {
-            for (int j = 0; j < sizeY; j++)
-            {
-                for (int k = 0; k < sizeZ; k++)
+                if (gridTile != null)
                 {
-                    try
-                    {
-                        
-                        objectArray[i, j, k] = temp[i, j, k];
-                        Debug.Log("Copy");
-
-                        for (int t = 0; t < objectGeneratorTiles.Count; t++)
-                        {
-                            if(temp[i, j, k].name == objectGeneratorTiles[t].name)
-                            {
-                                objectArray[i, j, k] = objectGeneratorTiles[t] as GameObject;
-                            }
-                        }
-                    }
-                    catch (System.Exception)
-                    {
-                        //Debug.Log("Failed");
-                    }
-                    if(objectArray[i,j,k] == null)
-                    {
-                        PlaceObject(i, j, k, tempBuilding);
-
-                    }
-
+                    //Instantiate(gridTile, new Vector3(i, j, k),Quaternion.Euler(0,0,0));
+                    myTileHandler.PlaceObject(gridTile,new Vector3(i, -0.4f, k), tempGrid);
                 }
             }
         }
-
-        //Debug.Log(objectArray.Length);
     }
-
-    private void PlaceObject(int i, int j, int k, GameObject parent)
-    {
-        if (objectArray[i, j, k] == null)
-        {
-            objectArray[i, j, k] = objectGeneratorTiles[0] as GameObject;
-        }
-
-        objectArray[i, j, k] = PrefabUtility.InstantiatePrefab(objectArray[i, j, k], parent.transform) as GameObject;
-        objectArray[i, j, k].transform.position = new Vector3(i, j, k);
-        objectArray[i, j, k].transform.rotation = Quaternion.Euler(0, 0, 0);
-
-
-        //objectArray[i, j, k].transform.parent = parent.transform;
-    }
-
-
-
     private void SaveObject(string buildingName)
     {
         //myMapMakerWindow.generatedObjects.Add(tempBuilding);
         //PrefabUtility.CreatePrefab("Assets/Resources/Buildings", tempBuilding);
+        bool CheckObjectList(string name)
+        {
+            foreach (GameObject building in myMapMakerWindow.generatedObjects)
+            {
+                if (building.name == name)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
 
         if (CheckObjectList(buildingName)== true)
         {
@@ -304,28 +249,25 @@ public class BuildingGenerator : EditorWindow
         this.Close();
     }
 
-    private bool CheckObjectList(string name)
+    private void ResetBuilding()
     {
-        foreach (GameObject building in myMapMakerWindow.generatedObjects)
+        for (int i = 0; i < selectedTile.Count; i++)
         {
-            if (building.name == name)
-            {
-                return true;
-            }
+            selectedTile[i] = false;
         }
-        return false;
-    }
-    private void Reset()
-    {
-        //gridY = 1;
-        if (tempBuilding == null)
+
+        if (tempGrid != null)
         {
-            tempBuilding = new GameObject("TempBuilding");
+            DestroyImmediate(tempGrid);
         }
-        else
+        if (tempBuilding != null)
         {
-            Object.DestroyImmediate(tempBuilding);
-            tempBuilding = new GameObject("TempBuilding");
+            DestroyImmediate(tempBuilding);
+        }
+        if (PreviewTile != null)
+        {
+            DestroyImmediate(PreviewTile);
+
         }
     }
 }
