@@ -6,55 +6,91 @@ using UnityEditor;
 [ExecuteInEditMode]
 public class TileHandler
 {
-    private Quaternion tempRotation = new Quaternion(0,0,0,0);
-    protected GameObject previewObject;
-    public GameObject PlaceObject(GameObject previewObject,Vector3 pos, GameObject parent)
+    /// <summary>
+    /// All events used by MapMaker.
+    /// </summary>
+     
+
+    public Quaternion tempRotation;
+    //public GameObject previewObject;
+    public GameObject PlaceObject(GameObject selectedBuilding, Vector3 pos,Quaternion rot, GameObject parent)
     {
 
-        GameObject myTile;
+        
+        
 
-        if (parent == null)
+        if (selectedBuilding != null)
         {
-            myTile = PrefabUtility.InstantiatePrefab(previewObject) as GameObject;
+            
+
+            if (parent == null)
+            {
+                selectedBuilding = UnityEngine.Object.Instantiate(selectedBuilding);
+            }
+            else
+            {
+                selectedBuilding = UnityEngine.Object.Instantiate(selectedBuilding,parent.transform);
+            }
+
+            //selectedBuilding.transform.position = pos;
+            //selectedBuilding.transform.rotation = rot;
+
+           
+            if (selectedBuilding.GetComponent<Building>() == true)
+            {
+                selectedBuilding.GetComponent<Building>().reloadMyData();
+            }
+
+
         }
         else
         {
-            myTile = PrefabUtility.InstantiatePrefab(previewObject, parent.transform) as GameObject;
+            selectedBuilding = null;
         }
 
-        myTile.transform.position = pos;
-        myTile.transform.rotation = tempRotation;
-        return myTile;
+        return selectedBuilding;
+
+
     }
-    //Preview in Scene
-    public void HandlePreviewPos(GameObject previewObject,Vector3 myPos)
+  
+    public void HandlePreviewPos(GameObject selectedBuilding, Vector3 myPos)
     {
-        previewObject.transform.position = myPos;
-        previewObject.transform.rotation = tempRotation;
-
+        if(selectedBuilding != null)
+        {
+            selectedBuilding.transform.position = myPos;
+            selectedBuilding.transform.rotation = tempRotation;
+        }
     }
-    public void HandlePreview(GameObject previewObject,Vector3 pos)
-    {
-        //Set Position
-        GameObject myTile = PlaceObject(previewObject, pos, null);
-        myTile.transform.position = pos;
+    
 
-        
-       
-    }
-
-    public void HandlePreviewRot(GameObject previewObject, Vector3 myPos, Vector3 target)
+    public void HandlePreviewRot(GameObject selectedBuilding, Vector3 myPos, Vector3 target, bool snapRot)
     {
         //Rotate to Target
         //lookAtPos.y is own y for axis rotation
-        
+        if (selectedBuilding != null)
+        {
+            selectedBuilding.transform.position = myPos;
 
-        Vector3 lookAtPos = new Vector3 (target.x, previewObject.transform.position.y,target.z);
-        Vector3 lookDirection = previewObject.transform.position - lookAtPos;
-        Quaternion lookRotation = Quaternion.LookRotation(-lookDirection);
+            Vector3 lookAtPos = new Vector3(target.x, selectedBuilding.transform.position.y, target.z);
+            Vector3 lookDirection = selectedBuilding.transform.position - lookAtPos;
+            Quaternion lookRotation = Quaternion.LookRotation(-lookDirection);
 
-        lookRotation = new Quaternion(Mathf.Round(lookRotation.x), Mathf.Round(lookRotation.y), Mathf.Round(lookRotation.z), Mathf.Round(lookRotation.w));
-        tempRotation = lookRotation;
-        previewObject.transform.rotation = lookRotation;
+            if (snapRot == true)
+            {
+                lookRotation = new Quaternion(Mathf.Round(lookRotation.x), Mathf.Round(lookRotation.y), Mathf.Round(lookRotation.z), Mathf.Round(lookRotation.w));
+            }
+
+            tempRotation = lookRotation;
+            selectedBuilding.transform.rotation = lookRotation;
+        }
     }
+    public void DestroyPreview(GameObject selectedBuilding)
+    {
+        Debug.Log("Destroy");
+        UnityEngine.Object.DestroyImmediate(selectedBuilding);
+    }
+
+    
+
+
 }

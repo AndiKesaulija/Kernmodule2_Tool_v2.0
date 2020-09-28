@@ -2,18 +2,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using System;
 
+[Serializable]
 public class MapMaker : EditorWindow
 {
-    private EventHandler myEventHandler = new EventHandler();
+    public StateMachine myStateMachine = new StateMachine();
+    public ObjectPool myObjectPool = new ObjectPool();
 
-    public List<Object> objectTiles = new List<Object>();
-    public List<GameObject> generatedObjects = new List<GameObject>();
-    private List<bool> selectedBuilding =  new List<bool>();
     
-    private int building;
-
-    private Vector2 scrollPosition = Vector2.zero;
 
     [MenuItem("Window/MapMaker")]
 
@@ -24,21 +21,16 @@ public class MapMaker : EditorWindow
 
     public void OnEnable()
     {
+        myObjectPool.myData.myBuildingData = new List<BuildingData>();
         SceneView.duringSceneGui += OnSceneGUI;
 
-        objectTiles.Clear();
-        Object[] myTiles = Resources.LoadAll("Prefabs/Tiles");
-        generatedObjects.Clear();
-        Object[] myBuildings = Resources.LoadAll("Prefabs/Buildings");
+        myObjectPool.ReloadAssets();
+        myObjectPool.Reload();
 
-        foreach (Object foundObject in myTiles)
-        {
-            objectTiles.Add(foundObject);
-        }
-        foreach (Object foundObject in myBuildings)
-        {
-            generatedObjects.Add(foundObject as GameObject);
-        }
+        myStateMachine.OnStart();
+        myStateMachine.SwithState(1);//PlaceMode
+
+
     }
     public void OnDisable()
     {
@@ -47,41 +39,23 @@ public class MapMaker : EditorWindow
         {
             generatorWindow.Close();
         }
+
+        SceneView.duringSceneGui -= OnSceneGUI;
+        myStateMachine.SwithState(0);//DisableMode
     }
 
     public void OnGUI()
     {
-        if (GUI.Button(new Rect(10, 80, 300, 20),"Generate Object"))
-        {
-            GetWindow(typeof(BuildingGenerator));
-        }
-        if (GUI.Button(new Rect(10, 110, 300, 20), "Clear List"))
-        {
-            generatedObjects.Clear();
-        }
 
-        if (generatedObjects != null)
-        {
-            for (int i = 0; i < generatedObjects.Count; i++)
-            {
-                selectedBuilding.Add(false);
-                selectedBuilding[i] = GUILayout.Toggle(selectedBuilding[i], "" + generatedObjects[i].name, "Button");
+        myStateMachine.OnGUI();
 
-                if (selectedBuilding[i])
-                {
-                    if (building != i)
-                    {
-                        building = i;
-                        for (int k = 0; k < generatedObjects.Count; k++)
-                        {
-                            if (k != i)
-                            {
-                                selectedBuilding[k] = false;
-                            }
-                        }
-                    }
-                }
-            }
+        if (GUI.Button(new Rect(10, 480, 300, 20), "Builder Mode"))
+        {
+            myStateMachine.SwithState(2);//BuilderMode
+        }
+        if (GUI.Button(new Rect(10, 460, 300, 20), "Place Mode"))
+        {
+            myStateMachine.SwithState(1);//PlaceMode
         }
 
     }
@@ -89,13 +63,8 @@ public class MapMaker : EditorWindow
     public void OnSceneGUI(SceneView scene)
     {
         HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive));
-        myEventHandler.MouseEvent(Event.current, generatedObjects[0], myEventHandler.CastRay());
+        myStateMachine.OnUpdate();
     }
 
-    private void PlaceBuilding(GameObject selectedObject, Vector3 myPosition, Vector3 myRotation)
-    {
-
-    }
-
-
+   
 }

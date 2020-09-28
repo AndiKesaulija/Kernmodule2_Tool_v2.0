@@ -4,11 +4,8 @@ using System;
 [Serializable]
 public class BuildingData 
 {
-    private int myID;
-    private Vector3 buildingPos;
-    private Vector3 buildingRot;
-
-    private TileData[] myTiles;
-
+    public int myID;
+    public Vector3 buildingPos;
+    public Quaternion buildingRot;
 
 }
