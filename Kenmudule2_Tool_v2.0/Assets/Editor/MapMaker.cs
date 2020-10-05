@@ -49,14 +49,22 @@ public class MapMaker : EditorWindow
 
         myStateMachine.OnGUI();
 
-        if (GUI.Button(new Rect(10, 480, 300, 20), "Builder Mode"))
-        {
-            myStateMachine.SwithState(2);//BuilderMode
-        }
+        //for (int i = 0; i < myObjectPool.objectTile.Count; i++)
+        //{
+        //    EditorGUI.ObjectField(new Rect(10, 350 + (20*i), 200, 20), myObjectPool.objectTile[i], typeof(GameObject), true);
+        //}
         if (GUI.Button(new Rect(10, 460, 300, 20), "Place Mode"))
         {
             myStateMachine.SwithState(1);//PlaceMode
         }
+        if (GUI.Button(new Rect(10, 480, 300, 20), "Builder Mode"))
+        {
+            myStateMachine.SwithState(2);//BuilderMode
+        }
+       
+
+        
+        //EditorGUILayout.DropdownButton();
 
     }
 

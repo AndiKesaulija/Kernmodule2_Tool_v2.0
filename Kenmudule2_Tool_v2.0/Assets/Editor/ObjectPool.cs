@@ -13,6 +13,8 @@ public class ObjectPool
     public List<GameObject> objectTiles = new List<GameObject>();
     public List<GameObject> generatedObjects = new List<GameObject>();
 
+    //public Dictionary<int, GameObject> objectTile = new Dictionary<int, GameObject>();
+
     public List<GameObject> placedObjects = new List<GameObject>();
     public DataWrapper myData = new DataWrapper();
 
@@ -25,6 +27,16 @@ public class ObjectPool
         {
             objectTiles.Add(foundObject as GameObject);
         }
+
+        Object empty = Resources.Load("Prefabs/Tiles/EmptyTile");
+        objectTiles.Add(empty as GameObject);
+        //objectTile.Clear();
+
+        //for (int i = 0; i < myTiles.Length; i++)
+        //{
+        //    objectTile.Add(i, myTiles[i] as GameObject);
+        //}
+
 
         generatedObjects.Clear();
         Object[] myBuildings = Resources.LoadAll("Prefabs/Buildings");

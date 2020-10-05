@@ -5,10 +5,11 @@ using UnityEngine;
 using UnityEditor;
 
 [ExecuteInEditMode]
-public class EventHandler : TileHandler
+public class EventHandler : Events
 {
     private bool mouseDown = false;
-    public GameObject previewObject;
+
+    private GameObject selectedPreview;
     private MapMaker myMapMaker;
     private Vector3 initialPos;
 
@@ -16,76 +17,177 @@ public class EventHandler : TileHandler
     public int selectedID;
     private GameObject mySelectedBuilding;
 
-   
-    public void MouseEvent(Vector3 pos,bool snapRotation,GameObject parent)
+    
+
+    public GameObject ShowPreview(GameObject selectedBuilding)
     {
-        Event e = Event.current;
+        selectedBuilding = UnityEngine.Object.Instantiate(selectedBuilding, new Vector3(0,0,0),new Quaternion(0,0,0,0));
+        
 
-        if (myMapMaker == null)
+        if (selectedBuilding.GetComponent<Building>() == true)
         {
-            myMapMaker = EditorWindow.GetWindow<MapMaker>();
+            selectedBuilding.GetComponent<Building>().reloadMyData();
+        }
+        if (myParentObject != null)
+        {
+            selectedBuilding.transform.SetParent(myParentObject.transform);
         }
 
-        //if Object NOT Selected
-        if (previewObject == null)
+        return selectedBuilding;
+    }
+    public GameObject PlaceObject(GameObject selectedBuilding,Vector3 myPos)
+    {
+        Vector3 newPos = CastRay();
+        newPos = new Vector3(Mathf.Round(newPos.x), 0, Mathf.Round(newPos.z));
+
+        selectedBuilding = UnityEngine.Object.Instantiate(selectedBuilding, myPos, new Quaternion(0, 0, 0, 0));
+
+
+        if (selectedBuilding.GetComponent<Building>() == true)
         {
-            if (mouseDown == false && e.button == 0 && e.isMouse && e.type == EventType.MouseDown)
+            selectedBuilding.GetComponent<Building>().reloadMyData();
+        }
+        if (myParentObject != null)
+        {
+            selectedBuilding.transform.SetParent(myParentObject.transform);
+        }
+
+        return selectedBuilding;
+    }
+    public void PlaceObjects(GameObject selectedBuilding, Vector3 startPos, Vector3 endPos, float distance)
+    {
+        Vector3 direction = startPos - endPos;
+
+        for (int i = 0; i < distance; i++)
+        {
+            if (direction.x > 0)
             {
-                if(GetObjectRay() != null)
-                {
-                    //UnityEngine.Object.DestroyImmediate(GetObjectRay());
-                }
+                PlaceObject(selectedBuilding, new Vector3(startPos.x - i, startPos.y, startPos.z));
             }
-
-        }
-        //if Object Selected
-        if (previewObject == null && mySelectedBuilding != null)
-        {
-            previewObject = PlaceObject(mySelectedBuilding, pos, tempRotation, null);
+            if (direction.x < 0)
+            {
+                PlaceObject(selectedBuilding, new Vector3(startPos.x + i, startPos.y, startPos.z));
+            }
+            if (direction.z > 0)
+            {
+                PlaceObject(selectedBuilding, new Vector3(startPos.x, startPos.y , startPos.z - i));
+            }
+            if (direction.z < 0)
+            {
+                PlaceObject(selectedBuilding, new Vector3(startPos.x, startPos.y, startPos.z + i));
+            }
         }
         
-        if (previewObject != null)
-        {
-            if (mouseDown == false)
-            {
-                HandlePreviewPos(previewObject, pos);
-            }
-
-            //LeftMouseDown
-            if (mouseDown == false && e.button == 0 && e.isMouse && e.type == EventType.MouseDown)
-            {
-                initialPos = pos;
-                mouseDown = true;
-            }
-            //LeftMouseDrag
-            if (mouseDown == true && e.type == EventType.MouseDrag)
-            {
-                HandlePreviewRot(previewObject, initialPos, CastRay(), snapRotation);
-            }
-            //LeftMouseUp
-            if (mouseDown == true && e.button == 0 && e.isMouse && e.type == EventType.MouseUp)
-            {
-                //GameObject newObject = PlaceObject(mySelectedBuilding, initialPos, tempRotation, parent);
-
-                myMapMaker.myObjectPool.placedObjects.Add(PlaceObject(mySelectedBuilding, initialPos, tempRotation, parent));
-                mouseDown = false;
-            }
-            //RightMouseDown
-            if (e.button == 1 && e.isMouse && e.type == EventType.MouseDown)
-            {
-                Debug.Log(selectedList);
-                if (selectedList != null)
-                {
-                    mySelectedBuilding = null;
-                    DisableTool(selectedList);
-                    DestroyPreview(previewObject);
-                    UnityEditor.EditorWindow.FocusWindowIfItsOpen<MapMaker>();
-                }
-            }
-        }
-       
+        
 
     }
+
+    public void DestroyPreviewObject(GameObject previewObject)
+    {
+        GameObject.DestroyImmediate(previewObject);
+        selectedPreview = null;
+    }
+    public void HandlePreview(GameObject previewObject)
+    {
+        if(previewObject != null)
+        {
+            Vector3 newPos = CastRay();
+            newPos = new Vector3(Mathf.Round(newPos.x), 0, Mathf.Round(newPos.z));
+            previewObject.transform.position = newPos;
+        }
+    }
+
+    
+    public void RotatePreview(GameObject selectedBuilding, Vector3 target)
+    {
+        //Rotate to Target
+        //lookAtPos.y is own y for axis rotation
+        if (selectedBuilding != null)
+        {
+
+            Vector3 lookAtPos = new Vector3(target.x, selectedBuilding.transform.position.y, target.z);
+            Vector3 lookDirection = selectedBuilding.transform.position - lookAtPos;
+            Quaternion lookRotation = Quaternion.LookRotation(-lookDirection);
+
+            lookRotation = new Quaternion(Mathf.Round(lookRotation.x), Mathf.Round(lookRotation.y), Mathf.Round(lookRotation.z), Mathf.Round(lookRotation.w));
+            tempRotation = lookRotation;
+            selectedBuilding.transform.rotation = lookRotation;
+        }
+    }
+    public void PlaceObjects()
+    {
+
+    }
+
+    //public void MouseEvent(Vector3 pos,bool snapRotation,GameObject parent)
+    //{
+    //    Event e = Event.current;
+
+    //    if (myMapMaker == null)
+    //    {
+    //        myMapMaker = EditorWindow.GetWindow<MapMaker>();
+    //    }
+
+    //    //if Object NOT Selected
+    //    if (previewObject == null)
+    //    {
+    //        if (mouseDown == false && e.button == 0 && e.isMouse && e.type == EventType.MouseDown)
+    //        {
+    //            if(GetObjectRay() != null)
+    //            {
+    //                //UnityEngine.Object.DestroyImmediate(GetObjectRay());
+    //            }
+    //        }
+
+    //    }
+    //    //if Object Selected
+    //    if (previewObject == null && mySelectedBuilding != null)
+    //    {
+    //        previewObject = PlaceObject(mySelectedBuilding, pos, tempRotation);
+    //    }
+
+    //    if (previewObject != null)
+    //    {
+    //        if (mouseDown == false)
+    //        {
+    //            HandlePreview(previewObject, pos);
+    //        }
+
+    //        //LeftMouseDown
+    //        if (mouseDown == false && e.button == 0 && e.isMouse && e.type == EventType.MouseDown)
+    //        {
+    //            initialPos = pos;
+    //            mouseDown = true;
+    //        }
+    //        //LeftMouseDrag
+    //        if (mouseDown == true && e.type == EventType.MouseDrag)
+    //        {
+    //            HandlePreview(previewObject, initialPos);
+    //        }
+    //        //LeftMouseUp
+    //        if (mouseDown == true && e.button == 0 && e.isMouse && e.type == EventType.MouseUp)
+    //        {
+    //            //GameObject newObject = PlaceObject(mySelectedBuilding, initialPos, tempRotation, parent);
+
+    //            myMapMaker.myObjectPool.placedObjects.Add(PlaceObject(mySelectedBuilding, initialPos, tempRotation));
+    //            mouseDown = false;
+    //        }
+    //        //RightMouseDown
+    //        if (e.button == 1 && e.isMouse && e.type == EventType.MouseDown)
+    //        {
+    //            Debug.Log(selectedList);
+    //            if (selectedList != null)
+    //            {
+    //                mySelectedBuilding = null;
+    //                DisableTool(selectedList);
+    //                DestroyPreview(previewObject);
+    //                UnityEditor.EditorWindow.FocusWindowIfItsOpen<MapMaker>();
+    //            }
+    //        }
+    //    }
+
+
+    //}
     public Vector3 TilePos(GameObject selectedTile)
     {
         Event curr = Event.current;
@@ -107,65 +209,42 @@ public class EventHandler : TileHandler
         }
         return Vector3.zero;
     }  //Cast ray from scenecamera to point in 3d scene(look at math)
-    public Vector3 CastRay()
-    {
-        Event curr = Event.current;
-        Ray mouseRay = HandleUtility.GUIPointToWorldRay(curr.mousePosition);
-        float drawPlaneHeight = 0;//y axis change if needed
-        float dstToDrawPlane = (drawPlaneHeight - mouseRay.origin.y) / mouseRay.direction.y;
-        Vector3 mousePosition = mouseRay.GetPoint(dstToDrawPlane);
-
-        return mousePosition;
-    }  //Cast ray from scenecamera to point in 3d scene(look at math)
-    public GameObject GetObjectRay()
-    {
-        Event curr = Event.current;
-        Ray mouseRay = HandleUtility.GUIPointToWorldRay(curr.mousePosition);
-        RaycastHit hit;
-
-        if (Physics.Raycast(mouseRay, out hit))
-        {
-            if (hit.collider != null && hit.collider.tag == "Tile")
-            {
-                return hit.collider.gameObject;
-            }
-        }
-        return null;
-    }  //Cast ray from scenecamera to point in 3d scene(look at math)
+    
+    
     //public void ShowObjectList(List<GameObject> ObjectList)
-    public void ShowObjectList(List<GameObject> ObjectList)
-    {
-        if (ObjectList != null)
-        {
-            for (int i = 0; i < ObjectList.Count; i++)
-            {
-                selectedList.Add(false);
-                selectedList[i] = GUILayout.Toggle(selectedList[i], "" + ObjectList[i].name, "Button");
+    //public void ShowObjectList(List<GameObject> ObjectList)
+    //{
+    //    if (ObjectList != null)
+    //    {
+    //        for (int i = 0; i < ObjectList.Count; i++)
+    //        {
+    //            selectedList.Add(false);
+    //            selectedList[i] = GUILayout.Toggle(selectedList[i], "" + ObjectList[i].name, "Button");
 
-                if (selectedList[i] == true)
-                {
-                    selectedID = i;
-                    if (mySelectedBuilding != ObjectList[i])
-                    {
+    //            if (selectedList[i] == true)
+    //            {
+    //                selectedID = i;
+    //                if (mySelectedBuilding != ObjectList[i])
+    //                {
                         
-                        //DestroyPreview(mySelectedBuilding);
-                        mySelectedBuilding = ObjectList[i];
-                    }
+    //                    //DestroyPreview(mySelectedBuilding);
+    //                    mySelectedBuilding = ObjectList[i];
+    //                }
 
 
-                    for (int k = 0; k < selectedList.Count; k++)
-                    {
-                        if (k != i)
-                        {
-                            selectedList[k] = false;
-                        }
-                    }
+    //                for (int k = 0; k < selectedList.Count; k++)
+    //                {
+    //                    if (k != i)
+    //                    {
+    //                        selectedList[k] = false;
+    //                    }
+    //                }
 
-                }
-            }
+    //            }
+    //        }
            
-        }
-    }
+    //    }
+    //}
     public bool CheckActive(List<bool> boolList)
     {
         foreach(bool mybool in boolList)
@@ -180,7 +259,7 @@ public class EventHandler : TileHandler
         return false;
     }
    
-    public void DisableTool(List<bool> boolList)
+    public void DisableTool(List<bool> boolList,GameObject previewObject)
     {
         for (int i = 0; i < boolList.Count; i++)
         {

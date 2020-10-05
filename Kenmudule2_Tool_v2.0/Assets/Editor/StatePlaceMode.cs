@@ -28,14 +28,14 @@ public class StatePlaceMode : State
     }
     public override void OnUpdate()
     {
-        myEventHandler.MouseEvent(myEventHandler.CastRay(), false, null);
+        //myEventHandler.MouseEvent(myEventHandler.CastRay(), false, null);
     }
     public override void OnGUI()
     {
-        if (myEventHandler.CheckActive(myEventHandler.selectedList) == false && myEventHandler.previewObject != null)
-        {
-            myEventHandler.DisableTool(myEventHandler.selectedList);
-        }
+        //if (myEventHandler.CheckActive(myEventHandler.selectedList) == false && myEventHandler.previewObject != null)
+        //{
+        //    myEventHandler.DisableTool(myEventHandler.selectedList);
+        //}
         
 
         if (GUI.Button(new Rect(10, 110, 300, 20), "Clear List (Disabled)"))
@@ -56,7 +56,7 @@ public class StatePlaceMode : State
             SaveMap("Test");
         }
 
-        myEventHandler.ShowObjectList(myMapMaker.myObjectPool.generatedObjects);
+        //myEventHandler.ShowObjectList(myMapMaker.myObjectPool.generatedObjects);
 
 
     }
@@ -65,7 +65,7 @@ public class StatePlaceMode : State
     public override void OnExit()
     {
         Debug.Log("Exit PlaceMode");
-        myEventHandler.DisableTool(myEventHandler.selectedList);
+        //myEventHandler.DisableTool(myEventHandler.selectedList);
 
     }
 
@@ -111,7 +111,7 @@ public class StatePlaceMode : State
 
         for (int i = 0; i < myMapMaker.myObjectPool.myData.myBuildingData.Count; i++)
         {
-            myMapMaker.myObjectPool.placedObjects.Add(myEventHandler.PlaceObject(myMapMaker.myObjectPool.generatedObjects[myMapMaker.myObjectPool.myData.myBuildingData[i].myID], myMapMaker.myObjectPool.myData.myBuildingData[i].buildingPos, myMapMaker.myObjectPool.myData.myBuildingData[i].buildingRot, null));
+            myMapMaker.myObjectPool.placedObjects.Add(myEventHandler.PlaceObject(myMapMaker.myObjectPool.generatedObjects[myMapMaker.myObjectPool.myData.myBuildingData[i].myID], myMapMaker.myObjectPool.myData.myBuildingData[i].buildingPos, myMapMaker.myObjectPool.myData.myBuildingData[i].buildingRot));
 
         }
 

@@ -198,7 +198,7 @@ GameObject:
   - component: {fileID: 7396305608806513975}
   - component: {fileID: 1181915508140491118}
   - component: {fileID: 4683391111322795979}
-  - component: {fileID: 5566295399632524916}
+  - component: {fileID: -7677319626670886018}
   m_Layer: 9
   m_Name: CornerTile
   m_TagString: Tile
@@ -282,7 +282,7 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &5566295399632524916
+--- !u!114 &-7677319626670886018
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -291,6 +291,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 8328109671144086556}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3c6b0c5c0a579b44e85aa6b096a0c4b1, type: 3}
+  m_Script: {fileID: 11500000, guid: 142b4f46ff7820049893ecf67b73adc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  myData:
+    myID: 0
+    xArrayPos: 0
+    zArrayPos: 0
+    buildingPos: {x: 0, y: 0, z: 0}
+    buildingRot: {x: 0, y: 0, z: 0, w: 0}
