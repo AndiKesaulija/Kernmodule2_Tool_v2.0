@@ -6,17 +6,17 @@ using UnityEngine;
 public class Building : MonoBehaviour
 {
 
-    public BuildingData myData = new BuildingData();
+    public List<BuildingData> myData = new List<BuildingData>();
     public void reloadMyData()
     {
-        myData = SetData();
+        //myData = SetData();
     }
     public BuildingData SetData()
     {
         BuildingData tempData = new BuildingData();
         //myData.myID = Set on StateBuilderMode.SaveObject()
 
-        tempData.buildingPos = this.transform.position;
+        //tempData.buildingPos = this.transform.position;
         tempData.buildingRot = this.transform.rotation;
 
         return tempData;

@@ -24,14 +24,16 @@ public class StateBuilderMode : State
     private Vector3 pointB;
 
     //Building
+    private bool buildingToggle = false;
     private GameObject tempBuilding;
-    private GameObject[] floors = new GameObject[4];
-    private List<int[,]> myBuilding = new List<int[,]>();
+    private static int size = 4;
+    private int selectedNum;
     private int activeFloor = 0;
 
+    private Building myBuilding = new Building();
+    private GameObject[] floors = new GameObject[size];
 
-    private int selectedNum;
-
+    //Event
     private bool mouseDown = false;
     public StateBuilderMode(StateMachine owner) : base(owner)
     {
@@ -56,93 +58,97 @@ public class StateBuilderMode : State
     }
     private void InitiateNewfloor()
     {
+        activeFloor = 0;
+
         if(tempBuilding != null)
         {
-            UnityEngine.Object.DestroyImmediate(tempBuilding);
+            UnityEngine.GameObject.DestroyImmediate(tempBuilding);
         }
-
         tempBuilding = new GameObject("TempBuilding");
-        int size = 4;
-        activeFloor = 0;
-        //Initiate
-        for (int i = 0; i < floors.Length; i++)
+
+        int num = 0;
+        for (int i = 0; i < size; i++)
         {
+            
             floors[i] = new GameObject("Floor" + i);
-            myBuilding.Add(new int[size, size]);
-
-            if (myBuilding[i] != null)
-            {
-                for (int j = 0; j < myBuilding[i].GetLength(0); j++)
-                {
-                    for (int k = 0; k < myBuilding[i].GetLength(1); k++)
-                    {
-                        myBuilding[i][j, k] = 2;
-                        GameObject setTile = UnityEngine.Object.Instantiate(myMapMaker.myObjectPool.objectTiles[myBuilding[i][j, k]], new Vector3(j, i, k), new Quaternion(0, 0, 0, 0));
-
-                        setTile.transform.SetParent(floors[i].transform);
-                    }
-                }
-            }
             floors[i].transform.SetParent(tempBuilding.transform);
+
+            for (int j = 0; j < size; j++)
+            {
+
+                for (int k = 0; k < size; k++)
+                {
+                    
+
+                    myBuilding.myData.Add(new BuildingData());
+                    myBuilding.myData[num].myID = num;
+                    if(i == 0)
+                    {
+                        myBuilding.myData[num].prefabID = 2;//Floor Start
+                    }
+                    else
+                    {
+                        myBuilding.myData[num].prefabID = 1;//EmptyTile
+                    }
+                    myBuilding.myData[num].myFloorNum = i;
+
+                    myBuilding.myData[num].xArrayPos = j;
+                    myBuilding.myData[num].zArrayPos = k;
+                    myBuilding.myData[num].buildingRot = new Quaternion(0, 0, 0, 0);
+
+                    myBuilding.myData[num].myObject = SetTile(myBuilding.myData[num]);
+                    myBuilding.myData[num].myObject.transform.SetParent(floors[i].transform);
+
+                    num = num + 1;
+                }
+
+            }
             floors[i].SetActive(false);
         }
-        floors[activeFloor].SetActive(true);
+        floors[0].SetActive(true);
+        activeFloor = 1;
+        floors[1].SetActive(true);
 
-
-        //for (int i = 0; i < myBuilding[floorNum].GetLength(0); i++)
-        //{
-        //    for (int j = 0; j < myBuilding[floorNum].GetLength(1); j++)
-        //    {
-        //        myBuildingLevel[i, j] = 1;
-        //        //Debug.Log(myBuildingLevel[i, j]);
-        //        GameObject setTile = UnityEngine.Object.Instantiate(myMapMaker.myObjectPool.objectTiles[myBuildingLevel[i, j]], new Vector3(i, 0, j), new Quaternion(0, 0, 0, 0));
-        //        setTile.GetComponent<Building>().myData.xArrayPos = i;
-        //        setTile.GetComponent<Building>().myData.zArrayPos = j;
-
-        //        setTile.transform.SetParent(floor.transform);
-        //    }
-        //}
     }
-    public void SetTile(GameObject target)
+    public void placeTile(GameObject target, int selectedTile)
     {
-       
-        if(target != null && target.transform.position.y == activeFloor)
+        if (target != null)
         {
-            Debug.Log(target);
-
-            if (target.tag == "GridTile" || target.tag == "Tile")
+            if(target.GetComponent<Tile>() != null)
             {
-                //BuildingData tempData = target.GetComponent<Building>().myData;
+                BuildingData tempData = target.GetComponent<Tile>().myData;
+                if(tempData.myFloorNum == activeFloor)
+                {
+                    UnityEngine.GameObject.DestroyImmediate(myBuilding.myData[tempData.myID].myObject);
+                    tempData.prefabID = selectedTile;
+                    tempData.myObject = SetTile(tempData);
+                    myBuilding.myData[tempData.myID] = tempData;
 
-                //myBuildingLevel[tempData.xArrayPos, tempData.zArrayPos] = mySelectedBuidlingID;
-
-                //Destroy target GameObject
-                myBuilding[activeFloor][(int)target.transform.position.x, (int)target.transform.position.z] = mySelectedBuidlingID;
-
-                //Instantiate new GameObject 
-                GameObject setTile = UnityEngine.Object.Instantiate(myMapMaker.myObjectPool.objectTiles[myBuilding[activeFloor][(int)target.transform.position.x, (int)target.transform.position.z]], target.transform.position, new Quaternion(0, 0, 0, 0));
-                UnityEngine.GameObject.DestroyImmediate(target);
-
-                //GameObject setTile = UnityEngine.Object.Instantiate(myMapMaker.myObjectPool.objectTiles[myBuildingLevel[tempData.xArrayPos, tempData.zArrayPos]], new Vector3(tempData.xArrayPos, 0, tempData.zArrayPos), new Quaternion(0, 0, 0, 0));
-
-                //setTile.GetComponent<Building>().myData = tempData;
-                setTile.transform.SetParent(floors[activeFloor].transform);
-                //Set int at arraypos to new object ID
-                //initiate new Object of Array[i,j] ID
+                    tempData.myObject.transform.SetParent(floors[activeFloor].transform);
+                }
             }
+            else
+            {
+                Debug.Log("No Tile");
+            }
+
+
         }
+    }
+    public GameObject SetTile(BuildingData target)
+    {
+        GameObject newTile = UnityEngine.Object.Instantiate(myMapMaker.myObjectPool.objectTiles[target.prefabID], new Vector3(target.xArrayPos, target.myFloorNum, target.zArrayPos), target.buildingRot);
+
+        if(newTile.GetComponent<Tile>() != null)
+        {
+            newTile.GetComponent<Tile>().myData = target;
+        }
+        return newTile;
     }
     public void SwitchFloor(bool up)
     {
-        activeFloor = Mathf.Clamp(activeFloor, 0, 4);
+       
 
-        for (int i = 0; i < floors.Length; i++)
-        {
-            if(i > activeFloor)
-            {
-                floors[i].SetActive(false);
-            }
-        }
         if(up == true && activeFloor < 3)
         {
             activeFloor = activeFloor + 1;
@@ -151,25 +157,46 @@ public class StateBuilderMode : State
         {
             activeFloor = activeFloor - 1;
         }
+
+        for (int i = 0; i < floors.Length; i++)
+        {
+            if (i > activeFloor)
+            {
+                floors[i].SetActive(false);
+            }
+        }
         floors[activeFloor].SetActive(true);
 
     }
+    public void ToggleBuilding(bool toggle)
+    {
+        for (int i = 0; i < floors.Length; i++)
+        {
+            floors[i].SetActive(!toggle);
+        }
 
+        buildingToggle = !toggle;
+        if(floors[activeFloor].activeInHierarchy == false)
+        {
+            for (int i = 0; i < floors.Length; i++)
+            {
+                if (i <= activeFloor)
+                {
+                    floors[i].SetActive(true);
+                }
+            }
+
+        }
+
+    }
+
+   
     public override void OnUpdate()
     {
-        //myEventHandler.MouseEvent(myEventHandler.TilePos(selectedBuilding), true, tempBuilding);
         myMouseEvents();
-        //myEventHandler.HandlePreview(previewObject);
     }
 
-    private void SelectMyBuilding()
-    {
-        if(previewObject != null)
-        {
-            myEventHandler.DestroyPreviewObject(previewObject);
-        }
-        previewObject = myEventHandler.ShowPreview(mySelectedBuilding);
-    }
+   
     private void myMouseEvents()
     {
         Event e = Event.current;
@@ -179,7 +206,7 @@ public class StateBuilderMode : State
         //LeftMouseDown
         if (mouseDown == false && e.button == 0 && e.isMouse && e.type == EventType.MouseDown)
         {
-            SetTile(myEventHandler.GetObjectRay());
+            placeTile(myEventHandler.GetObjectRay(), mySelectedBuidlingID);
 
             //pointA = myEventHandler.CastRoundRay();
 
@@ -236,6 +263,10 @@ public class StateBuilderMode : State
         {
             SwitchFloor(false);
         }
+        if (GUI.Button(new Rect(10, 600, 300, 20), "Togglle floors"))
+        {
+            ToggleBuilding(buildingToggle);
+        }
 
 
     }
@@ -278,23 +309,6 @@ public class StateBuilderMode : State
        
 
     }
-    
-    public bool CheckActive(List<bool> boolList)
-    {
-        foreach (bool mybool in boolList)
-        {
-            if (mybool == true)
-            {
-                return true;
-
-            }
-        }
-
-        return false;
-    }
-
-    
-
    
     private void SaveObject(string buildingName)
     {

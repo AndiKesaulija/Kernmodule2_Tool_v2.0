@@ -111,7 +111,7 @@ public class StatePlaceMode : State
 
         for (int i = 0; i < myMapMaker.myObjectPool.myData.myBuildingData.Count; i++)
         {
-            myMapMaker.myObjectPool.placedObjects.Add(myEventHandler.PlaceObject(myMapMaker.myObjectPool.generatedObjects[myMapMaker.myObjectPool.myData.myBuildingData[i].myID], myMapMaker.myObjectPool.myData.myBuildingData[i].buildingPos, myMapMaker.myObjectPool.myData.myBuildingData[i].buildingRot));
+            //myMapMaker.myObjectPool.placedObjects.Add(myEventHandler.PlaceObject(myMapMaker.myObjectPool.generatedObjects[myMapMaker.myObjectPool.myData.myBuildingData[i].myID], myMapMaker.myObjectPool.myData.myBuildingData[i].buildingPos, myMapMaker.myObjectPool.myData.myBuildingData[i].buildingRot));
 
         }
 

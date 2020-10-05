@@ -28,16 +28,6 @@ public class ObjectPool
             objectTiles.Add(foundObject as GameObject);
         }
 
-        Object empty = Resources.Load("Prefabs/Tiles/EmptyTile");
-        objectTiles.Add(empty as GameObject);
-        //objectTile.Clear();
-
-        //for (int i = 0; i < myTiles.Length; i++)
-        //{
-        //    objectTile.Add(i, myTiles[i] as GameObject);
-        //}
-
-
         generatedObjects.Clear();
         Object[] myBuildings = Resources.LoadAll("Prefabs/Buildings");
 
@@ -62,7 +52,7 @@ public class ObjectPool
 
         for (int i = 0; i < placedObjects.Count; i++)
         {
-            myData.myBuildingData.Add(placedObjects[i].GetComponent<Building>().myData);
+            //myData.myBuildingData.Add(placedObjects[i].GetComponent<Building>().myData);
         }
     }
 }

@@ -4,11 +4,14 @@ using System;
 [Serializable]
 public class BuildingData 
 {
+    public GameObject myObject;
     public int myID;
+    public int prefabID;
+    public int myFloorNum;
     public int xArrayPos;
     public int zArrayPos;
 
-    public Vector3 buildingPos;
     public Quaternion buildingRot;
+    
 
 }
