@@ -9,7 +9,6 @@ public class EventHandler : Events
 {
     private bool mouseDown = false;
 
-    private GameObject selectedPreview;
     private MapMaker myMapMaker;
     private Vector3 initialPos;
 
@@ -37,8 +36,8 @@ public class EventHandler : Events
     }
     public GameObject PlaceObject(GameObject selectedBuilding,Vector3 myPos)
     {
-        Vector3 newPos = CastRay();
-        newPos = new Vector3(Mathf.Round(newPos.x), 0, Mathf.Round(newPos.z));
+        //Vector3 newPos = CastRay();
+        //newPos = new Vector3(Mathf.Round(newPos.x), 0, Mathf.Round(newPos.z));
 
         selectedBuilding = UnityEngine.Object.Instantiate(selectedBuilding, myPos, new Quaternion(0, 0, 0, 0));
 
@@ -85,15 +84,15 @@ public class EventHandler : Events
     public void DestroyPreviewObject(GameObject previewObject)
     {
         GameObject.DestroyImmediate(previewObject);
-        selectedPreview = null;
+        //selectedPreview = null;
     }
     public void HandlePreview(GameObject previewObject)
     {
         if(previewObject != null)
         {
-            Vector3 newPos = CastRay();
-            newPos = new Vector3(Mathf.Round(newPos.x), 0, Mathf.Round(newPos.z));
-            previewObject.transform.position = newPos;
+            //Vector3 newPos = CastRay();
+            //newPos = new Vector3(Mathf.Round(newPos.x), 0, Mathf.Round(newPos.z));
+            //previewObject.transform.position = newPos;
         }
     }
 

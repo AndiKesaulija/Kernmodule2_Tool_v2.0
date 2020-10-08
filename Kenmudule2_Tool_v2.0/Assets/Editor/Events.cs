@@ -20,24 +20,15 @@ public class Events
     //{
 
     //}
-    public GameObject PlaceObject(GameObject selectedBuilding, Vector3 pos, Quaternion rot)
+    public void PlaceObject(GameObject targetObject ,Vector3 position, Quaternion rotation)
     {
-        selectedBuilding = UnityEngine.Object.Instantiate(selectedBuilding,pos,rot);
-
-        if (selectedBuilding.GetComponent<Building>() == true)
-        {
-            selectedBuilding.GetComponent<Building>().reloadMyData();
-        }
-        if(myParentObject != null)
-        {
-            selectedBuilding.transform.SetParent(myParentObject.transform);
-        }
-
-        myTempPos = pos;
-
-        return selectedBuilding;
+        GameObject newTile = UnityEngine.Object.Instantiate(targetObject, position, rotation);
     }
-  
+    public void DestroyObject(GameObject targetObject)
+    {
+        UnityEngine.Object.DestroyImmediate(targetObject);
+    }
+
     public void HandlePreview(GameObject selectedBuilding, Vector3 myPos)
     {
         if(selectedBuilding != null)
@@ -69,49 +60,8 @@ public class Events
     //        selectedBuilding.transform.rotation = lookRotation;
     //    }
     //}
-    public Vector3 CastRay()
-    {
-        Event curr = Event.current;
-        Ray mouseRay = HandleUtility.GUIPointToWorldRay(curr.mousePosition);
-        float drawPlaneHeight = 0;//y axis change if needed
-        float dstToDrawPlane = (drawPlaneHeight - mouseRay.origin.y) / mouseRay.direction.y;
-        Vector3 mousePosition = mouseRay.GetPoint(dstToDrawPlane);
-
-        return mousePosition;
-    }  //Cast ray from scenecamera to point in 3d scene(look at math)
-    public Vector3 CastRoundRay()
-    {
-        Event curr = Event.current;
-        Ray mouseRay = HandleUtility.GUIPointToWorldRay(curr.mousePosition);
-        float drawPlaneHeight = 0;//y axis change if needed
-        float dstToDrawPlane = (drawPlaneHeight - mouseRay.origin.y) / mouseRay.direction.y;
-        Vector3 mousePosition = mouseRay.GetPoint(dstToDrawPlane);
-
-        mousePosition = new Vector3(Mathf.Round(mousePosition.x), Mathf.Round(mousePosition.y), Mathf.Round(mousePosition.z));
-
-
-        return mousePosition;
-    }  //Cast ray from scenecamera to point in 3d scene(look at math)
-    public GameObject GetObjectRay()
-    {
-        Event curr = Event.current;
-        Ray mouseRay = HandleUtility.GUIPointToWorldRay(curr.mousePosition);
-        RaycastHit hit;
-
-        if (Physics.Raycast(mouseRay, out hit))
-        {
-            if (hit.collider != null)
-            {
-                return hit.collider.gameObject;
-            }
-        }
-        return null;
-    }  //Cast ray from scenecamera to point in 3d scene(look at math)
-    public void DestroyPreview(GameObject selectedBuilding)
-    {
-        Debug.Log("Destroy");
-        UnityEngine.Object.DestroyImmediate(selectedBuilding);
-    }
+    
+    
 
     
 

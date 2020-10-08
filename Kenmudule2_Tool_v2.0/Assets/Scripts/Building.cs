@@ -5,8 +5,16 @@ using UnityEngine;
 [SelectionBase]
 public class Building : MonoBehaviour
 {
+    //public List<BuildingData> myData = new List<BuildingData>();
 
-    public List<BuildingData> myData = new List<BuildingData>();
+    public Building(int size)
+    {
+        Building.mySize = size;
+    }
+    private static int mySize =4;
+
+    public BuildingData[,,] myData = new BuildingData[mySize, mySize, mySize];
+
     public void reloadMyData()
     {
         //myData = SetData();
