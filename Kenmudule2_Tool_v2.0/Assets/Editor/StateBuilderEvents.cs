@@ -1,311 +1,232 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System;
+using System.IO;
 using UnityEngine;
 using UnityEditor;
-using System.Linq;
 
 
-public class StateBuilderEvents 
+
+public class StateBuilderEvents : Events
 {
     //Building
-    private GameObject tempBuilding;
-    private static int size = 4;
-    private int selectedNum;
-    private int activeFloor = 0;
+    private static int size = 6;
+    public int activeFloor = 0;
+    private int floorsize = 1;
 
     private Building myBuilding = new Building(size);
     private GameObject[] floors = new GameObject[size];
 
     private bool buildingToggle = false;
 
-    //Events
-    public Vector3 tempPos;
-    public BuildingData tempStartPos;
+    //UI
+    public List<bool> selectedList = new List<bool>();
+    public int mySelectedBuidlingID;
+    private GameObject mySelectedBuilding;
 
-    public StateBuilderEvents(MapMaker owner)
+
+    public StateBuilderEvents(MapMaker myMapMaker)
     {
-        this.owner = owner;
+        this.myMapMaker = myMapMaker;
     }
-    private MapMaker owner;
+    private MapMaker myMapMaker;
 
-    public void InitiateNewfloor()
+
+    public void InitiateNewfloor(DataWrapper<TileData> BuildingData)
     {
-        Debug.Log(myBuilding.myData.Length);
-
         activeFloor = 0;
 
-        DestroyBuilding();
-
-        tempBuilding = new GameObject("TempBuilding");
-
-        int num = 0;
-        for (int i = 0; i < size; i++)
+        if(myMapMaker.myObjectPool.tempBuilding != null)
         {
+            DestroyObject(myMapMaker.myObjectPool.tempBuilding);
+        }
+        if (myMapMaker.myObjectPool.RotateImage != null)
+        {
+            DestroyObject(myMapMaker.myObjectPool.RotateImage);
+        }
 
-            floors[i] = new GameObject("Floor" + i);
-            floors[i].transform.SetParent(tempBuilding.transform);
+        myMapMaker.myObjectPool.tempBuilding = new GameObject("TempBuilding");
+        myMapMaker.myObjectPool.tempBuilding.tag ="Building";
 
-            for (int j = 0; j < size; j++)
+
+
+
+        if (BuildingData == null)//initiate new Building (Clean)
+        {
+            for (int i = 0; i < size; i++)
             {
-                
-                for (int k = 0; k < size; k++)
+
+                floors[i] = new GameObject("Floor" + i);
+                floors[i].transform.SetParent(myMapMaker.myObjectPool.tempBuilding.transform);
+                floors[i].SetActive(false);
+
+                for (int j = 0; j < size; j++)
                 {
-                    myBuilding.myData[j, i, k] = new BuildingData();
-                    myBuilding.myData[j, i, k].myID = num;
-                    if (i == 0)
+
+                    for (int k = 0; k < size; k++)
                     {
-                        myBuilding.myData[j, i, k].prefabID = 2;//Floor Start
+                        myBuilding.myData[j, i, k] = new TileData();
+                        if (i == 0)
+                        {
+                            myBuilding.myData[j, i, k].ObjectID = 1;//set Floor 0 Objects to floorTile
+                        }
+                        else
+                        {
+                            myBuilding.myData[j, i, k].ObjectID = 0;//EmptyTile
+                        }
+
+                        myBuilding.myData[j, i, k].myFloorNum = i;
+                        myBuilding.myData[j, i, k].xArrayPos = j;
+                        myBuilding.myData[j, i, k].zArrayPos = k;
+                        myBuilding.myData[j, i, k].gridPos = new Vector3Int(j, i, k);
+
+
+                        myBuilding.myData[j, i, k].myObject = PlaceObject(myMapMaker.myObjectPool.objectTiles[myBuilding.myData[j, i, k].ObjectID], myBuilding.myData[j, i, k].gridPos, Quaternion.identity, floors[activeFloor]);
+
+                        myBuilding.myData[j, i, k].myObject.transform.SetParent(floors[i].transform);
                     }
-                    else
-                    {
-                        myBuilding.myData[j, i, k].prefabID = 1;//EmptyTile
-                    }
-
-                    myBuilding.myData[j, i, k].myFloorNum = i;
-                    myBuilding.myData[j, i, k].xArrayPos = j;
-                    myBuilding.myData[j, i, k].zArrayPos = k;
-                    myBuilding.myData[j, i, k].gridPos = new Vector3Int(j, i, k);
-
-                    myBuilding.myData[j, i, k].buildingRot = new Quaternion(0, 0, 0, 0);
-
-                    myBuilding.myData[j, i, k].myObject = SetTile(myBuilding.myData[j, i, k]);
-                    myBuilding.myData[j, i, k].myPosition = myBuilding.myData[j, i, k].myObject.transform.position;
-
-                    myBuilding.myData[j, i, k].myObject.transform.SetParent(floors[i].transform);
-                    num = num + 1;
                 }
-                
-
-            }
-            floors[i].SetActive(false);
-        }
-        floors[0].SetActive(true);
-        activeFloor = 1;
-        floors[1].SetActive(true);
-
-
-    }
-
-    public void DestroyBuilding()
-    {
-        if (tempBuilding != null)
-        {
-            UnityEngine.GameObject.DestroyImmediate(tempBuilding);
-        }
-    }
-
-    public void SetDistance()
-    {
-        if(GetObjectRay() != null)
-        {
-            tempPos = GetObjectRay().transform.position;
-        }
-    }
-    public void PlaceNewTile(Vector3 startPosition, Vector3 endPosition, int selectedBuildingID)
-    {
-        Quaternion Lookrotation = new Quaternion();
-        int count = Mathf.RoundToInt(Vector3.Distance(startPosition, endPosition));
-        Vector3 difference = new Vector3(startPosition.x - endPosition.x, startPosition.y - endPosition.y, startPosition.z - endPosition.z);
-        Debug.Log("Start Position: " + startPosition + " End Position: " + endPosition + " Count: " + count + " Difference: " + difference + " Vector: " + (difference/count));
-
-        for (int i = 0; i < count; i++)
-        {
-            Vector3 tilePosition = startPosition - (difference / count * i);
-            //Debug.Log("Position: " + tilePosition);
-
-            Vector3 LookDirection = tilePosition - endPosition;
-            Lookrotation = Quaternion.LookRotation(LookDirection);
-            //Debug.Log("Rotation: " + (Lookrotation));
-
-            for (int j = 0; j < size; j++)
-            {
-                if(myBuilding.myData[i, activeFloor, j].myPosition == tilePosition)
-                {
-                    //Debug.Log("Match: " + myBuilding.myData[j].myID + " Position: " + tilePosition);
-                    //PlaceObject(myBuilding.myData[i, activeFloor, j].myObject, Lookrotation, selectedBuildingID);
-                }
-            }
-        }
-        //Place object on EndPositon
-        //Debug.Log(endPosition + " : End Position");
-
-        //for (int j = 0; j < myBuilding.myData.Length; j++)
-        //{
-        //    if (myBuilding.myData[j].myPosition == endPosition)
-        //    {
-        //        //Debug.Log("Match: " + myBuilding.myData[j].myID + " Position: " + endPosition);
-        //        PlaceObject(myBuilding.myData[j].myObject, Lookrotation, selectedBuildingID);
-        //    }
-            
-        //}
-
-    }
-    public void SetStartPos()
-    {
-        if (GetDataRay() != null)
-        {
-            tempStartPos = GetDataRay();
-        }
-    }
-    public void PlaceTiles(int selectedBuildingID)
-    {
-        BuildingData startPos = tempStartPos;
-        BuildingData endPos = GetDataRay();
-
-
-        
-
-        if (startPos != null && endPos != null)
-        {
-            int count = Mathf.RoundToInt(Vector3Int.Distance(startPos.gridPos, endPos.gridPos));
-            Vector3Int difference = startPos.gridPos - endPos.gridPos;
-
-            Quaternion Lookrotation = new Quaternion();
-            //Debug.Log("StartPos: " + startPos.gridPos + " EndPos: " + endPos.gridPos + " Count: " + count + " Difference: " + difference);
-
-
-            if (count > 0)
-            {
-                for (int i = 0; i <= count; i++)
-                {
-                    Vector3Int tilePosition = startPos.gridPos - (difference / count * i);
-                    Vector3 LookDirection = tilePosition - endPos.gridPos;
-                    if (LookDirection != Vector3.zero)
-                    {
-                        Lookrotation = Quaternion.LookRotation(LookDirection);
-                    }
-
-                    PlaceObject(myBuilding.myData[tilePosition.x, tilePosition.y, tilePosition.z].myObject, Lookrotation, selectedBuildingID);
-
-                }
-            }
-            else
-            {
-                PlaceObject(myBuilding.myData[startPos.xArrayPos,startPos.myFloorNum,startPos.zArrayPos].myObject, Lookrotation, selectedBuildingID);
-                //Debug.Log("SingelClick");
-
             }
         }
         else
         {
-            Debug.Log("Out of bounds");
-        }
-
-        tempStartPos = null;
-
-
-        //Debug.Log("StartPos: " + startPos[0, 0, 0] + " EndPos: " + endPos + " SelectedBuildingID: " + selectedBuildingID);
-    }
-    public void CheckFloor()
-    {
-        
-
-        for (int j = 0; j < size; j++)
-        {
-            for (int k = 0; k < size; k++)
+            for (int i = 0; i < size; i++)
             {
+                floors[i] = new GameObject("Floor" + i);
+                floors[i].transform.SetParent(myMapMaker.myObjectPool.tempBuilding.transform);
+                floors[i].SetActive(false);
 
-                bool top = false;
-                bool bottom = false;
-                bool left = false;
-                bool right = false;
+                for (int j = 0; j < size; j++)
+                {
 
-                if (j - 1 >= 0)
-                {
-                    if (myBuilding.myData[j, activeFloor, k].prefabID == 4 && myBuilding.myData[j - 1, activeFloor, k].prefabID == 4)
+                    for (int k = 0; k < size; k++)
                     {
-                        //Debug.Log("Top?");
-                        top = true;
-                    }
-                }
-                if(j + 1 < size)
-                {
-                    if (myBuilding.myData[j, activeFloor, k].prefabID == 4 && myBuilding.myData[j + 1, activeFloor, k].prefabID == 4)
-                    {
-                        //Debug.Log("Bottom?");
-                        bottom = true;
-                    }
-                }
-                
-                if (k - 1 >= 0)
-                {
-                    if (myBuilding.myData[j, activeFloor, k].prefabID == 4 && myBuilding.myData[j, activeFloor, k - 1].prefabID == 4)
-                    {
-                        //Debug.Log("Left?");
-                        left = true;
-                    }
-                    
-                }
-                if(k + 1 < size)
-                {
-                    if (myBuilding.myData[j, activeFloor, k].prefabID == 4 && myBuilding.myData[j, activeFloor, k + 1].prefabID == 4)
-                    {
-                        //Debug.Log("Right?");
-                        right = true;
-                    }
-                }
-                if (top == true && (left == true || right == true))
-                {
-                    Debug.Log("InitiateCorner");
+                        myBuilding.myData[j, i, k] = new TileData();
+                        
+                        myBuilding.myData[j, i, k].ID = myBuilding.myData.Length;
+                        myBuilding.myData[j, i, k].myFloorNum = i;
+                        myBuilding.myData[j, i, k].xArrayPos = j;
+                        myBuilding.myData[j, i, k].zArrayPos = k;
+                        myBuilding.myData[j, i, k].gridPos = new Vector3Int(j, i, k);
 
-                    myBuilding.myData[j, activeFloor, k].prefabID = 0;
-                    PlaceObject(myBuilding.myData[j, activeFloor, k].myObject, Quaternion.identity, myBuilding.myData[j, activeFloor, k].prefabID);
+                    }
                 }
             }
-        }
-        
-    }
-    
-
-    public void PlaceObject(GameObject targetObject,Quaternion lookRoation, int selectedObject)
-    {
-        if (targetObject != null)
-        {
-            if (targetObject.GetComponent<Tile>() != null)
+            for (int l = 0; l < BuildingData.myData.Count; l++)
             {
-                BuildingData tempData = targetObject.GetComponent<Tile>().myData;
-                if (tempData.myFloorNum == activeFloor)
+                myBuilding.myData[BuildingData.myData[l].xArrayPos, BuildingData.myData[l].myFloorNum, BuildingData.myData[l].zArrayPos].ObjectID = BuildingData.myData[l].ObjectID;
+
+                myBuilding.myData[BuildingData.myData[l].xArrayPos, BuildingData.myData[l].myFloorNum, BuildingData.myData[l].zArrayPos].myObject = PlaceObject(myMapMaker.myObjectPool.objectTiles[BuildingData.myData[l].ObjectID], BuildingData.myData[l].gridPos, BuildingData.myData[l].myRotation, floors[BuildingData.myData[l].myFloorNum]);
+            }
+        }
+
+        floors[0].SetActive(true);
+        activeFloor = 1;
+        floors[1].SetActive(true);
+
+        Vector3 center = myMapMaker.myObjectPool.tempBuilding.transform.position + new Vector3((size / 2) - 0.5f, 0, (size / 2) - 0.5f);
+        myMapMaker.myObjectPool.RotateImage = HandlePreview(center, size / 6, myMapMaker.myObjectPool.buildingRotationMat);
+    }
+
+
+    public void PlaceTiles(int selectedBuildingID)
+    {
+        Vector3Int difference = new Vector3Int();
+        Vector3Int tilePosition = new Vector3Int();
+        Quaternion Lookrotation = new Quaternion();
+
+        
+        int count = Mathf.RoundToInt(Vector3Int.Distance(tempStartPos, tempEndPos));
+            
+        difference = tempStartPos - tempEndPos;
+
+            
+        Debug.Log("StartPos: " + tempStartPos + " EndPos: " + tempEndPos + " Count: " + count + " Difference: " + difference + " SelectedBuildingID: " + selectedBuildingID );
+        Debug.Log(tilePosition + " : " + activeFloor);
+
+        if(tempStartPos != Vector3.zero)
+        {
+            if (count > 0)
+            {
+                for (int i = 0; i <= count; i++)
                 {
-                    UnityEngine.GameObject.DestroyImmediate(myBuilding.myData[tempData.xArrayPos,tempData.myFloorNum,tempData.zArrayPos].myObject);//Destroy GameObject.
-                    tempData.prefabID = selectedObject;
-                    tempData.buildingRot = lookRoation;
-                    tempData.myObject = SetTile(tempData);//Initiate new GameObject at same position.
-                    myBuilding.myData[tempData.xArrayPos, tempData.myFloorNum, tempData.zArrayPos] = tempData;
 
-                    tempData.myObject.transform.SetParent(floors[activeFloor].transform);
+                    tilePosition = tempStartPos - (difference / count) * i;
+                    Vector3Int LookDirection = Vector3Int.FloorToInt(tilePosition - tempEndPos);
 
-                    CheckFloor();
+
+                    if (LookDirection != Vector3.zero)
+                    {
+                        Lookrotation = Quaternion.LookRotation(LookDirection);
+                    }
+                    if (tilePosition.x >= 0 && tilePosition.x < size && tilePosition.x >= 0 && tilePosition.x < size &&
+                        tilePosition.z >= 0 && tilePosition.z < size && tilePosition.z >= 0 && tilePosition.z < size)
+                    {
+                        if (selectedBuildingID == 2)//wall
+                        {
+                            SetTileData(myBuilding.myData[tilePosition.x, tilePosition.y, tilePosition.z], Lookrotation, selectedBuildingID);
+
+                        }
+                        else
+                        {
+                            if (i == 0)
+                            {
+                                SetTileData(myBuilding.myData[tilePosition.x, tilePosition.y, tilePosition.z], Lookrotation, selectedBuildingID);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (selectedBuildingID == 2)//wall
+                        {
+                            Debug.Log("OutOfBounds: " + tilePosition + " Count: " + i);
+                        }
+                    }
                 }
             }
             else
             {
-                Debug.Log("No Tile");
+                if (tempStartPos.x >= 0 && tempStartPos.x < size && tempStartPos.x >= 0 && tempStartPos.x < size &&
+                    tempStartPos.z >= 0 && tempStartPos.z < size && tempStartPos.z >= 0 && tempStartPos.z < size)
+                {
+                    SetTileData(myBuilding.myData[tempStartPos.x, tempStartPos.y, tempStartPos.z], Lookrotation, selectedBuildingID);
+                }
             }
-
         }
+        
+        
+        tempStartPos = Vector3Int.zero;
+        tempEndPos = Vector3Int.zero;
     }
-    public GameObject SetTile(BuildingData target)
+    public void SetTileData(TileData targetObject, Quaternion lookRoation, int selectedBuildingID)
     {
-        GameObject newTile = UnityEngine.Object.Instantiate(owner.myObjectPool.objectTiles[target.prefabID], new Vector3(target.xArrayPos, target.myFloorNum, target.zArrayPos), target.buildingRot);
-
-        if (newTile.GetComponent<Tile>() != null)
+        if (targetObject != null)
         {
-            newTile.GetComponent<Tile>().myData = target;
+            Vector3 tilePosition = targetObject.gridPos;
+            TileData tempData = targetObject;
+
+            tempData.ObjectID = selectedBuildingID;
+
+          
+            UnityEngine.GameObject.DestroyImmediate(myBuilding.myData[tempData.xArrayPos, tempData.myFloorNum, tempData.zArrayPos].myObject);//Destroy GameObject.
+            tempData.myObject = PlaceObject(myMapMaker.myObjectPool.objectTiles[selectedBuildingID], tilePosition, lookRoation, floors[activeFloor]);//Init New GameObject
+
+            myBuilding.myData[tempData.xArrayPos, tempData.myFloorNum, tempData.zArrayPos] = tempData;
+            
         }
-        return newTile;
+        else
+        {
+            Debug.Log("Target = Null");
+        }
     }
-
-
     public void SwitchFloor(bool up)
     {
-        if (up == true && activeFloor < 3)
+        if (up == true && activeFloor < size-1)
         {
-            activeFloor = activeFloor + 1;
+            activeFloor = activeFloor + floorsize;
         }
         if (up == false && activeFloor > 0)
         {
-            activeFloor = activeFloor - 1;
+            activeFloor = activeFloor - floorsize;
         }
 
         for (int i = 0; i < floors.Length; i++)
@@ -315,6 +236,7 @@ public class StateBuilderEvents
                 floors[i].SetActive(false);
             }
         }
+        Debug.Log(activeFloor);
         floors[activeFloor].SetActive(true);
     }
     public void ToggleBuilding()
@@ -339,96 +261,94 @@ public class StateBuilderEvents
 
     }
 
-    public Vector3 CastRay()
+    public void ShowObjectList(List<GameObject> ObjectList)
     {
-        Event curr = Event.current;
-        Ray mouseRay = HandleUtility.GUIPointToWorldRay(curr.mousePosition);
-        float drawPlaneHeight = 0;//y axis change if needed
-        float dstToDrawPlane = (drawPlaneHeight - mouseRay.origin.y) / mouseRay.direction.y;
-        Vector3 mousePosition = mouseRay.GetPoint(dstToDrawPlane);
 
-        return mousePosition;
-    }  //Cast ray from scenecamera to point in 3d scene(look at math)
-    public Vector3 CastRoundRay()
-    {
-        Event curr = Event.current;
-        Ray mouseRay = HandleUtility.GUIPointToWorldRay(curr.mousePosition);
-        float drawPlaneHeight = 0;//y axis change if needed
-        float dstToDrawPlane = (drawPlaneHeight - mouseRay.origin.y) / mouseRay.direction.y;
-        Vector3 mousePosition = mouseRay.GetPoint(dstToDrawPlane);
-
-        mousePosition = new Vector3(Mathf.Round(mousePosition.x), Mathf.Round(mousePosition.y), Mathf.Round(mousePosition.z));
-
-
-        return mousePosition;
-    }  //Cast ray from scenecamera to point in 3d scene(look at math)
-    public GameObject GetObjectRay()
-    {
-        Event curr = Event.current;
-        Ray mouseRay = HandleUtility.GUIPointToWorldRay(curr.mousePosition);
-        RaycastHit hit;
-
-        if (Physics.Raycast(mouseRay, out hit))
+        if (ObjectList != null)
         {
-            if (hit.collider != null)
+            for (int i = 0; i < ObjectList.Count; i++)
             {
-                return hit.collider.gameObject;
-            }
-        }
-        return null;
-    }  //Cast ray from scenecamera to point in 3d scene(look at math)
-    public BuildingData GetDataRay()
-    {
-        Event curr = Event.current;
-        Ray mouseRay = HandleUtility.GUIPointToWorldRay(curr.mousePosition);
-        RaycastHit hit;
+                selectedList.Add(false);
 
-        if (Physics.Raycast(mouseRay, out hit))
-        {
-            //Debug.DrawRay(hit.transform.position, new Vector3(0,20,0));
+                selectedList[i] = GUILayout.Toggle(selectedList[i], "" + ObjectList[i].name, "Button");
+                
 
-            if (hit.collider != null)
-            {
-                if (hit.collider.gameObject.GetComponent<Tile>() != null)
+                if (selectedList[i] == true)
                 {
-                    return hit.collider.gameObject.GetComponent<Tile>().myData;
+
+                    if (mySelectedBuilding != ObjectList[i])
+                    {
+                        mySelectedBuidlingID = i;
+                        mySelectedBuilding = ObjectList[i];
+                    }
+
+
+                    for (int k = 0; k < selectedList.Count; k++)
+                    {
+                        if (k != i)
+                        {
+                            selectedList[k] = false;
+                        }
+                    }
+
+
                 }
-                return null;
             }
-            return null;
+
         }
-        return null;
-    }  //Cast ray from scenecamera to point in 3d scene(look at math)
 
-    public void SaveObject(string buildingName)
+
+    }
+    public void SaveBuilding(string saveName, string folder, DataWrapper<TileData> Data)
     {
-        //myMapMakerWindow.generatedObjects.Add(tempBuilding);
-        //PrefabUtility.CreatePrefab("Assets/Resources/Buildings", tempBuilding);
 
-        tempBuilding.tag = "Building";
+        foreach(TileData data in myBuilding.myData)
+        {
+            if (data.ObjectID == 0)
+            {
+                DestroyObject(data.myObject);
+            }
+        }
+        AssetDatabase.Refresh();
+        
+        Object[] mySaves = Resources.LoadAll<TextAsset>("Saves/" + folder + "/");
+
+        string path = "Assets/Resources/Saves/" + folder + "/" + saveName + ".txt";
+        StreamWriter writer = new StreamWriter(path, false);
+
+
+        string myJson = JsonUtility.ToJson(Data, false);
 
         bool CheckObjectList(string name)
         {
 
-            foreach (GameObject building in owner.myObjectPool.generatedObjects)
+            for (int i = 0; i < mySaves.Length; i++)
             {
-                if (building.name == name)
+                if (mySaves[i].name == name)
                 {
                     return true;
                 }
             }
             return false;
+
         }
 
-        if (CheckObjectList(buildingName) == true)//Replace with error message/are you sure
+        if (CheckObjectList(saveName) == true)//Replace with error message/are you sure
         {
-            PrefabUtility.SaveAsPrefabAsset(tempBuilding, "Assets/Resources/Prefabs/Buildings/" + buildingName + ".prefab");
+            Debug.Log("OverWrite: " + saveName);
+            PrefabUtility.SaveAsPrefabAsset(myMapMaker.myObjectPool.tempBuilding, "Assets/Resources/Prefabs/Buildings/" + saveName + ".prefab");
+            writer.Write(myJson);
         }
         else
         {
-            owner.myObjectPool.generatedObjects.Add(PrefabUtility.SaveAsPrefabAsset(tempBuilding, "Assets/Resources/Prefabs/Buildings/" + buildingName + ".prefab"));
+            myMapMaker.myObjectPool.buildings.Add(myMapMaker.myObjectPool.buildings.Count,PrefabUtility.SaveAsPrefabAsset(myMapMaker.myObjectPool.tempBuilding, "Assets/Resources/Prefabs/Buildings/" + saveName + ".prefab"));
+            writer.Write(myJson);
         }
 
-        owner.myObjectPool.ReloadAssets();
+        writer.Close();
+        AssetDatabase.Refresh();
     }
+
+
+
 }

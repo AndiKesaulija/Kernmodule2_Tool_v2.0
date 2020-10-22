@@ -10,50 +10,53 @@ public class StateBuilderMode : State
     private static MapMaker myMapMaker;
     private StateBuilderEvents myEventHandler;
 
-
-    //UI Object List
-    private List<bool> selectedList = new List<bool>();
-
-    public int mySelectedBuidlingID;
-    public GameObject mySelectedBuilding;
-    public GameObject previewObject;
-    public GameObject placedObject;
-    private Vector3 pointA;
-    private Vector3 pointB;
-
-
-
-    
-
     //Event
     private bool mouseDown = false;
     public StateBuilderMode(StateMachine owner) : base(owner)
     {
         this.owner = owner;
+
     }
 
     public override void OnEnter()
     {
-        myMapMaker = EditorWindow.GetWindow<MapMaker>();
-        myMapMaker.myObjectPool.Reload();
+        myMapMaker = owner.myMapMaker;
 
         myEventHandler = new StateBuilderEvents(myMapMaker);
-        myEventHandler.InitiateNewfloor();
+
+        myMapMaker.myObjectPool.ReloadMap();
+        myEventHandler.HideObjects(myMapMaker.myObjectPool.placedObjects, false);
+
+        myEventHandler.InitiateNewfloor(myMapMaker.myObjectPool.myTileData);
+
+        myEventHandler.FocusObject(myMapMaker.myObjectPool.tempBuilding);
 
     }
     public override void OnExit()
     {
         Debug.Log("Exit PlaceMode");
-        myEventHandler.DestroyBuilding();
-        //myEventHandler.DisableTool(selectedTile);
-    }
-   
+        myEventHandler.DestroyObject(myMapMaker.myObjectPool.tempBuilding);
+        myEventHandler.DestroyObject(myMapMaker.myObjectPool.RotateImage);
+        myEventHandler.HideObjects(myMapMaker.myObjectPool.placedObjects, true);
 
-   
+    }
+
+
+
     public override void OnUpdate()
     {
         myMouseEvents();
     }
+    public override void OnPopUp()
+    {
+        EditorWindow.GetWindow<Editor_SaveWindow>();
+    }
+    public override void OnSave(string myString)
+    {
+        myMapMaker.myObjectPool.ReloadTiles();
+        myEventHandler.SaveBuilding(myString,"Buildings",myMapMaker.myObjectPool.myTileData);
+    }
+
     public void myMouseEvents()
     {
         Event e = Event.current;
@@ -63,19 +66,21 @@ public class StateBuilderMode : State
         if (mouseDown == false && e.button == 0 && e.isMouse && e.type == EventType.MouseDown)
         {
             //myEventHandler.SetDistance();
-            myEventHandler.SetStartPos();
+            myEventHandler.SetStartPos(myEventHandler.activeFloor);
             mouseDown = true;
         }
         //LeftMouseDrag
         if (mouseDown == true && e.type == EventType.MouseDrag)
         {
+            myEventHandler.SetEndPos(myEventHandler.activeFloor);
         }
         //LeftMouseUp
         if (mouseDown == true && e.button == 0 && e.isMouse && e.type == EventType.MouseUp)
         {
             //myEventHandler.PlaceNewTile(myEventHandler.tempPos, myEventHandler.GetObjectRay().transform.position, mySelectedBuidlingID);
-            
-            myEventHandler.PlaceTiles(mySelectedBuidlingID);
+
+            myEventHandler.SetEndPos(myEventHandler.activeFloor);
+            myEventHandler.PlaceTiles(myEventHandler.mySelectedBuidlingID);
 
 
             //myEventHandler.PlaceObject(myEventHandler.GetObjectRay(), mySelectedBuidlingID);
@@ -84,24 +89,23 @@ public class StateBuilderMode : State
         //RightMouseDown
         if (e.button == 1 && e.isMouse && e.type == EventType.MouseDown)
         {
-            myEventHandler.PlaceObject(myEventHandler.GetObjectRay(),Quaternion.identity, 1);// 1 = EmptyTile
+            //myEventHandler.PlaceObject(myEventHandler.GetObjectRay(),Quaternion.identity, 2);//  = EmptyTile
         }
     }
+   
 
 
 
     public override void OnGUI()
     {
-        ShowObjectList(myMapMaker.myObjectPool.objectTiles);
+        
+        myEventHandler.ShowObjectList(myMapMaker.myObjectPool.objectTiles);
 
 
-        if (GUI.Button(new Rect(10, 500, 300, 20), "Save"))
-        {
-            myEventHandler.SaveObject("TempName");
-        }
+        
         if (GUI.Button(new Rect(10, 520, 300, 20), "InitiateNewBuilding"))
         {
-            myEventHandler.InitiateNewfloor();
+            myEventHandler.InitiateNewfloor(null);
         }
         if (GUI.Button(new Rect(10, 540, 300, 20), "Floor Up"))
         {
@@ -118,46 +122,7 @@ public class StateBuilderMode : State
 
 
     }
-    public void ShowObjectList(List<GameObject> ObjectList)
-    {
 
-        if (ObjectList != null)
-        {
-            for (int i = 0; i < ObjectList.Count; i++)
-            {
-                selectedList.Add(false);
-                selectedList[i] = GUILayout.Toggle(selectedList[i], "" + ObjectList[i].name, "Button");
-
-                
-                if (selectedList[i] == true)
-                {
-
-                    if (mySelectedBuilding != ObjectList[i])
-                    {
-                        mySelectedBuidlingID = i;
-                        //DestroyPreview(mySelectedBuilding);
-                        mySelectedBuilding = ObjectList[i];
-                        //SelectMyBuilding();
-                    }
-
-
-                    for (int k = 0; k < selectedList.Count; k++)
-                    {
-                        if (k != i)
-                        {
-                            selectedList[k] = false;
-                        }
-                    }
-                    
-
-                }
-            }
-
-        }
-       
-
-    }
    
-    
 
 }

@@ -61,7 +61,9 @@ MonoBehaviour:
     myObject: {fileID: 0}
     myID: 0
     prefabID: 0
-    myFloorNum: 0
     xArrayPos: 0
+    myFloorNum: 0
     zArrayPos: 0
+    gridPos: {x: 0, y: 0, z: 0}
+    myPosition: {x: 0, y: 0, z: 0}
     buildingRot: {x: 0, y: 0, z: 0, w: 0}

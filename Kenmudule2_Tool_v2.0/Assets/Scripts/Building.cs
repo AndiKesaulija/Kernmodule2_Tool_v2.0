@@ -2,31 +2,18 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[SelectionBase]
-public class Building : MonoBehaviour
+public class Building
 {
-    //public List<BuildingData> myData = new List<BuildingData>();
-
+    //public List TileData> myData = new List TileData>();
+    private static int mySize;
+    public TileData[,,] myData;
     public Building(int size)
     {
         Building.mySize = size;
+        myData = new TileData[mySize, mySize, mySize];
     }
-    private static int mySize =4;
 
-    public BuildingData[,,] myData = new BuildingData[mySize, mySize, mySize];
+    
+     
 
-    public void reloadMyData()
-    {
-        //myData = SetData();
-    }
-    public BuildingData SetData()
-    {
-        BuildingData tempData = new BuildingData();
-        //myData.myID = Set on StateBuilderMode.SaveObject()
-
-        //tempData.buildingPos = this.transform.position;
-        tempData.buildingRot = this.transform.rotation;
-
-        return tempData;
-    }
 }

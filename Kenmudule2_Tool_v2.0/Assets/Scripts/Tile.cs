@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class Tile : MonoBehaviour
 {
-    public BuildingData myData = new BuildingData();
     
     private void OnDrawGizmos()
     {

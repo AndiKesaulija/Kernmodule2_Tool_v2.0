@@ -4,8 +4,8 @@ using System.Collections.Generic;
 
 
 [Serializable]
-public class DataWrapper
+public class DataWrapper<T>
 {
-    public List<BuildingData> myBuildingData = new List<BuildingData>();
+    public List<T> myData = new List<T>();
 
 }

@@ -29,6 +29,14 @@ public class StateDisableMode : State
     {
 
     }
+    public override void OnPopUp()
+    {
+
+    }
+    public override void OnSave(string myString)
+    {
+
+    }
 
 
 }

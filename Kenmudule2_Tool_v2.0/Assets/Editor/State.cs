@@ -14,4 +14,7 @@ public abstract class State
     public abstract void OnUpdate();
     public abstract void OnGUI();
     public abstract void OnExit();
+
+    public abstract void OnPopUp();
+    public abstract void OnSave(string myString);
 }

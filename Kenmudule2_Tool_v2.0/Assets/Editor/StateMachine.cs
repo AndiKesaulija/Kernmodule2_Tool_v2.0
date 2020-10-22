@@ -7,6 +7,12 @@ public class StateMachine
     public State currentState;
     private Dictionary<int, State> states = new Dictionary<int, State>();
 
+    public MapMaker myMapMaker;
+
+    public StateMachine(MapMaker myMapMaker)
+    {
+        this.myMapMaker = myMapMaker;
+    }
     public void OnStart()
     {
         AddState(new StateDisableMode(this), 0);
@@ -33,6 +39,11 @@ public class StateMachine
     public void AddState(State state, int name)//Add new state to Dictionary
     {
         states.Add(name, state);
+    }
+    public void Save()
+    {
+        currentState?.OnPopUp();
+        //currentState?.OnSave("KEK");
     }
 
 
