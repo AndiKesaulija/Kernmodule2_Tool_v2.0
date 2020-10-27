@@ -2,20 +2,18 @@
 using System;
 
 [Serializable]
-public class TileData 
+public class TileData
 {
     public GameObject myObject;
     public int ID;
     public int ObjectID;
 
 
-    public int xArrayPos;
+
+    public float xArrayPos;
     public int myFloorNum;
-    public int zArrayPos;
+    public float zArrayPos;
     public Vector3Int gridPos;
     public Quaternion myRotation;
-
-
-
 
 }

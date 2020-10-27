@@ -18,36 +18,15 @@ public class StatePlaceEvents : Events
     public List<bool> selectedList = new List<bool>();
     public int mySelectedBuidlingID;
     private GameObject mySelectedBuilding;
-    public void PlaceBuilding()
+    public void PlaceBuilding(Vector3 tempStartPos, Vector3 tempEndPos)
     {
-
-
         Vector3Int LookDirection = Vector3Int.FloorToInt(tempStartPos - tempEndPos);
         Quaternion Lookrotation = Quaternion.LookRotation(LookDirection);
 
-        //Debug.Log("SelectedBuilding: " + mySelectedBuidlingID + "StartPos: " + tempStartPos + " EndPos: " + tempEndPos + " Lookrotation: " + Lookrotation);
-
-
-
-        GameObject newBuilding = PlaceObject(myMapMaker.myObjectPool.buildings[mySelectedBuidlingID], tempStartPos, Lookrotation, null);
+        GameObject newBuilding = PlaceObject(myMapMaker.myObjectPool.myBuildings[myMapMaker.myGUIHandler.mySelectedObjectID], tempStartPos, Lookrotation, null);
 
         myMapMaker.myObjectPool.placedObjects.Add(newBuilding);
 
-        tempStartPos = Vector3Int.zero;
-        tempEndPos = Vector3Int.zero;
-    }
-    public GameObject ShowPreview(GameObject selectedBuilding)
-    {
-        selectedBuilding = UnityEngine.Object.Instantiate(selectedBuilding, new Vector3(0, 0, 0), new Quaternion(0, 0, 0, 0));
-
-
-       
-        if (myParentObject != null)
-        {
-            selectedBuilding.transform.SetParent(myParentObject.transform);
-        }
-
-        return selectedBuilding;
     }
 
     public void DestroyPlacedObjects(List<GameObject> myObjects)
@@ -57,61 +36,9 @@ public class StatePlaceEvents : Events
             UnityEngine.Object.DestroyImmediate(building);
         }
     }
-    public void ShowObjectList(Dictionary<int, GameObject> ObjectList)
-    {
-
-        if (ObjectList != null)
-        {
-            for (int i = 0; i < ObjectList.Count; i++)
-            {
-                selectedList.Add(false);
-                GUILayout.BeginHorizontal();
-
-                selectedList[i] = GUILayout.Toggle(selectedList[i], "" + ObjectList[i].name, "Button");
-                if (GUI.Button(new Rect(20, 300 + (20 * i), 20, 20), "Edit"))
-                {
-                    //Clear Map
-
-                    string path = "Assets/Resources/Saves/Buildings/" + ObjectList[i].name + ".txt";
-
-                    string myFile = File.ReadAllText(path);
-
-                    myMapMaker.myObjectPool.myTileData = JsonUtility.FromJson<DataWrapper<TileData>>(myFile);
-
-                    myMapMaker.myStateMachine.SwithState(2);
-                    Debug.Log("Edit");
-                }
-                GUILayout.EndHorizontal();
-
-                if (selectedList[i] == true)
-                {
-
-                    if (mySelectedBuilding != ObjectList[i])
-                    {
-                        mySelectedBuidlingID = i;
-                        mySelectedBuilding = ObjectList[i];
-                    }
-
-
-                    for (int k = 0; k < selectedList.Count; k++)
-                    {
-                        if (k != i)
-                        {
-                            selectedList[k] = false;
-                        }
-                    }
-
-
-                }
-            }
-
-        }
-
-
-    }
     public void SaveMap(string saveName, string folder, DataWrapper<BuildingData> Data)
     {
-
+        myMapMaker.myObjectPool.ReloadMap();
         AssetDatabase.Refresh();
         Object[] mySaves = Resources.LoadAll<TextAsset>("Saves/" + folder + "/");
 
@@ -147,5 +74,23 @@ public class StatePlaceEvents : Events
 
         writer.Close();
         AssetDatabase.Refresh();
+    }
+    public void LoadMap(string saveName)
+    {
+        //Clear Map
+        myMapMaker.myObjectPool.ReloadMap();
+        DestroyPlacedObjects(myMapMaker.myObjectPool.placedObjects);
+
+        string path = "Assets/Resources/Saves/Maps/" + saveName + ".txt";
+
+        string myFile = File.ReadAllText(path);
+
+        myMapMaker.myObjectPool.myMapData = JsonUtility.FromJson<DataWrapper<BuildingData>>(myFile);
+
+        for (int i = 0; i < myMapMaker.myObjectPool.myMapData.myData.Count; i++)
+        {
+            myMapMaker.myObjectPool.placedObjects.Add(PlaceObject(myMapMaker.myObjectPool.buildings[myMapMaker.myObjectPool.myMapData.myData[i].ID], myMapMaker.myObjectPool.myMapData.myData[i].position, myMapMaker.myObjectPool.myMapData.myData[i].rotation, null));
+
+        }
     }
 }

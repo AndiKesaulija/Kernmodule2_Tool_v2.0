@@ -7,122 +7,139 @@ using UnityEditor;
 
 public class StatePlaceMode : State
 {
+    public StatePlaceEvents myEventHandler = new StatePlaceEvents(myMapMaker);
+
+    public static MapMaker myMapMaker;
     public StatePlaceMode(StateMachine owner) : base(owner)
     {
         this.owner = owner;
+        myMapMaker = owner.myMapMaker;
     }
 
-    private static MapMaker myMapMaker;
-    private StatePlaceEvents myEventHandler;
 
+    public override List<Object> myItems { get { return myMapMaker.myObjectPool.myBuildings; } }
+    public override TextAsset[] mySaves { get { return myMapMaker.myObjectPool.myMapSaves; } }
+
+    
 
     //Event
     private bool mouseDown = false;
 
-    
-
     public override void OnEnter()
     {
         Debug.Log("Enter PlaceMode");
-        //myMapMaker = EditorWindow.GetWindow<MapMaker>();
+        Debug.Log(myItems.Count);
+        myMapMaker.myGUIHandler.AddItemsToGUI(myMapMaker.myGUIHandler.MainMenuItems);
+        myMapMaker.myGUIHandler.AddItemsToGUI(myMapMaker.myGUIHandler.ShowObjectList);
 
-        myMapMaker = owner.myMapMaker;
+        //EventHandler<int>.AddListner(EventType.ON_MOUSE_DOWN, myEventHandler.SetStartPos);
+        //EventHandler<int>.AddListner(EventType.ON_MOUSE_DOWN, myEventHandler.SetEndPos);
 
-        myEventHandler = new StatePlaceEvents(myMapMaker);
+
+        //EventHandler<int>.AddListner(EventType.ON_MOUSE_UP, myEventHandler.SetEndPos);
+
+        //EventHandler.AddListner(EventType.ON_MOUSE_UP, myEventHandler.PlaceBuilding);
+
+    }
+    public override void OnExit()
+    {
+        Debug.Log("Exit PlaceMode");
+        myMapMaker.myGUIHandler.MyGUI = null;
+
+
+        //EventHandler<int>.RemoveListner(EventType.ON_MOUSE_DOWN, myEventHandler.SetStartPos);
+        //EventHandler<int>.RemoveListner(EventType.ON_MOUSE_DOWN, myEventHandler.SetEndPos);
+
+
+        //EventHandler<int>.RemoveListner(EventType.ON_MOUSE_UP, myEventHandler.SetEndPos);
+
+        //EventHandler.RemoveListner(EventType.ON_MOUSE_UP, myEventHandler.PlaceBuilding);
+
+
 
     }
     public override void OnUpdate()
     {
         myMouseEvents();
     }
-    public override void OnPopUp()
+    public override void OnPopUp(int windowType)
     {
-        EditorWindow.GetWindow<Editor_SaveWindow>();
+        if (windowType == 0)
+        {
+            EditorWindow.GetWindow<Editor_LoadWindow>();
+        }
+        if (windowType == 1)
+        {
+            EditorWindow.GetWindow<Editor_SaveWindow>();
+        }
     }
     public override void OnSave(string myString)
     {
-        myMapMaker.myObjectPool.ReloadMap();
         myEventHandler.SaveMap(myString,"Maps",myMapMaker.myObjectPool.myMapData);
+    }
+    public override void OnLoad(string saveName)
+    {
+        myEventHandler.LoadMap(saveName);
     }
     public override void OnGUI()
     {
-
-        myEventHandler.ShowObjectList(myMapMaker.myObjectPool.buildings);
-
-       
-        if (GUI.Button(new Rect(10, 130, 300, 20), "Destroy Placed Objects"))
-        {
-            myMapMaker.myObjectPool.ReloadMap();
-            myEventHandler.DestroyPlacedObjects(myMapMaker.myObjectPool.placedObjects);
-        }
-
-        if (GUI.Button(new Rect(10, 160, 300, 20), "Load Map>"))
-        {
-            LoadMap("Test");
-        }
-        
+        myMapMaker.myGUIHandler.MyGUI(myMapMaker.myStateMachine.currentState.myItems);
 
     }
     public void myMouseEvents()
     {
         Event e = Event.current;
 
-
-        //LeftMouseDown
-        if (mouseDown == false && e.button == 0 && e.isMouse && e.type == EventType.MouseDown)
+        if(mouseDown == false && e.button == 0 && e.isMouse && e.type == UnityEngine.EventType.MouseDown)
         {
-            myEventHandler.SetStartPos(0);
+            EventHandler<int>.RaiseEvent(EventType.ON_MOUSE_DOWN, 0);
+
             mouseDown = true;
         }
-        //LeftMouseDrag
-        if (mouseDown == true && e.type == EventType.MouseDrag)
+        if (mouseDown == true && e.button == 0 && e.isMouse && e.type == UnityEngine.EventType.MouseUp)
         {
-            myEventHandler.SetEndPos(0);
-        }
-        //LeftMouseUp
-        if (mouseDown == true && e.button == 0 && e.isMouse && e.type == EventType.MouseUp)
-        {
-
-            myEventHandler.SetEndPos(0);
-            myEventHandler.PlaceBuilding();
+            EventHandler<int>.RaiseEvent(EventType.ON_MOUSE_UP, 0);
+            EventHandler.RaiseEvent(EventType.ON_MOUSE_UP);
 
             mouseDown = false;
         }
-        //RightMouseDown
-        if (e.button == 1 && e.isMouse && e.type == EventType.MouseDown)
-        {
-            //myEventHandler.PlaceObject(myEventHandler.GetObjectRay(),Quaternion.identity, 2);//  = EmptyTile
-        }
+        //LeftMouseDown
+        //if (mouseDown == false && e.button == 0 && e.isMouse && e.type == EventType.MouseDown)
+        //{
+        //    myEventHandler.SetStartPos(0);
+        //    mouseDown = true;
+        //}
+        ////LeftMouseDrag
+        //if (mouseDown == true && e.type == EventType.MouseDrag)
+        //{
+        //    myEventHandler.SetEndPos(0);
+        //}
+        ////LeftMouseUp
+        //if (mouseDown == true && e.button == 0 && e.isMouse && e.type == EventType.MouseUp)
+        //{
+
+        //    myEventHandler.SetEndPos(0);
+        //    myEventHandler.PlaceBuilding();
+
+        //    mouseDown = false;
+        //}
+        ////RightMouseDown
+        //if (e.button == 1 && e.isMouse && e.type == EventType.MouseDown)
+        //{
+        //    //myEventHandler.PlaceObject(myEventHandler.GetObjectRay(),Quaternion.identity, 2);//  = EmptyTile
+        //}
     }
 
-    public override void OnExit()
+    public void Test(int my)
     {
-        Debug.Log("Exit PlaceMode");
-        //myEventHandler.DisableTool(myEventHandler.selectedList);
-
+        Debug.Log("Test: " + my);
     }
+
+   
 
     
 
-    private void LoadMap(string saveName)
-    {
-        //Clear Map
-        myMapMaker.myObjectPool.ReloadMap();
-        myEventHandler.DestroyPlacedObjects(myMapMaker.myObjectPool.placedObjects);
-
-        string path = "Assets/Saves/" + saveName + ".txt";
-
-        string myFile = File.ReadAllText(path);
-
-        myMapMaker.myObjectPool.myMapData = JsonUtility.FromJson<DataWrapper<BuildingData>>(myFile);
-
-        for (int i = 0; i < myMapMaker.myObjectPool.myMapData.myData.Count; i++)
-        {
-            myMapMaker.myObjectPool.placedObjects.Add(myEventHandler.PlaceObject(myMapMaker.myObjectPool.buildings[myMapMaker.myObjectPool.myMapData.myData[i].ID], myMapMaker.myObjectPool.myMapData.myData[i].position, myMapMaker.myObjectPool.myMapData.myData[i].rotation,null));
-
-        }
-
-    }
+   
  
 
 

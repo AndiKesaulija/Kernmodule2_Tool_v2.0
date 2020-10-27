@@ -8,7 +8,7 @@ using System.Linq;
 using System.IO;
 
 
-public class Editor_SaveWindow : EditorWindow
+public class Editor_LoadWindow : EditorWindow
 {
     private MapMaker myMapMaker;
     private State myCurrState;
@@ -28,38 +28,22 @@ public class Editor_SaveWindow : EditorWindow
         myMapMaker = GetWindow<MapMaker>();
         myCurrState = myMapMaker.myStateMachine.currentState;
         mySaves = myMapMaker.myStateMachine.currentState.mySaves;
+
+        Debug.Log(mySaves.Length);
     }
     private void OnGUI()
     {
-        GUILayout.BeginArea(new Rect(10, 10, 590, height/2), "Save Name: ");
+        GUILayout.BeginArea(new Rect(10, 10, 590, height / 2), "Save Name: ");
 
         for (int i = 0; i < mySaves.Length; i++)
         {
             if (GUILayout.Button(mySaves[i].name, GUILayout.Width(Screen.width / 3)))
             {
-                myCurrState.OnSave(mySaves[i].name);
+                myCurrState.OnLoad(mySaves[i].name);
                 this.Close();
             }
         }
-
         GUILayout.EndArea();
-
-
-        GUILayout.BeginArea(new Rect(10, height - 40, 590, height), "Save Name: ");
-        GUILayout.BeginHorizontal();
-
-        saveName = EditorGUILayout.TextField("Save Name: ", saveName);
-
-        if (GUILayout.Button("Save", GUILayout.Width(100)))
-        {
-            myCurrState.OnSave(saveName);
-            this.Close();
-        }
-
-        GUILayout.EndHorizontal();
-        GUILayout.EndArea();
-
-
 
     }
 }

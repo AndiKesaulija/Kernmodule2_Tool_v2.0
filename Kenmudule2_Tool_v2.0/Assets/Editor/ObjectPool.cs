@@ -8,8 +8,11 @@ using System.Linq;
 public class ObjectPool
 {
 
-    public List<GameObject> objectTiles = new List<GameObject>();
+    //public List<GameObject> objectTiles = new List<GameObject>();
     public Dictionary<int, GameObject> buildings = new Dictionary<int, GameObject>();
+
+    
+
 
 
     public List<GameObject> placedObjects = new List<GameObject>();
@@ -19,47 +22,44 @@ public class ObjectPool
     public List<GameObject> placedTiles = new List<GameObject>();
     public DataWrapper<TileData> myTileData = new DataWrapper<TileData>();//wrapper with all TileData
 
-
+    /// <summary>
+    /// //Kijk Hierboven
+    /// </summary>
     public GameObject tempBuilding;
     public GameObject RotateImage;
     public Material buildingRotationMat;
 
-    public ObjectPool()
-    {
-        buildingRotationMat = Resources.Load("Materials/PreviewRotation", typeof(Material)) as Material;
-        myTileData.myData = new List<TileData>();
-    }
-   
+    public List<Object> myBuildings = new List<Object>();
+    public List<Object> myTiles = new List<Object>();
+
+    //Saves
+    public TextAsset[] myMapSaves;
+    public TextAsset[] myBuildingSaves;
+
+
     public void ReloadAssets()
     {
-        Debug.Log("ReloadAssets");
-        AssetDatabase.Refresh();
-        objectTiles.Clear();
-        Object[] myTiles = Resources.LoadAll("Prefabs/Tiles");
-        Debug.Log("Tiles Found: " + myTiles.Length);
+        buildingRotationMat = Resources.Load("Materials/PreviewRotation", typeof(Material)) as Material;
+        myMapSaves = Resources.LoadAll<TextAsset>("Saves/Maps/");
+        myBuildingSaves = Resources.LoadAll<TextAsset>("Saves/Buildings/");
 
-        objectTiles.Add(Resources.Load<GameObject>("Prefabs/Tiles/EmptyTile"));//0
-        objectTiles.Add(Resources.Load<GameObject>("Prefabs/Tiles/FloorTile"));//1
-        objectTiles.Add(Resources.Load<GameObject>("Prefabs/Tiles/WallTile"));//2
+        myTiles.Clear();
+        
+        myTiles.Add(Resources.Load<GameObject>("Prefabs/Tiles/EmptyTile"));//1
+        myTiles.Add(Resources.Load<GameObject>("Prefabs/Tiles/FloorTile"));//2
+        myTiles.Add(Resources.Load<GameObject>("Prefabs/Tiles/WallTile"));//3
 
-
-
-        foreach (Object foundObject in myTiles)
+        foreach (Object foundObject in Resources.LoadAll("Prefabs/Tiles"))
         {
-            objectTiles.Add(foundObject as GameObject);
+            myTiles.Add(foundObject as GameObject);
         }
 
-        //generatedObjects.Clear();
-        buildings.Clear();
-
-        Object[] myBuildings = Resources.LoadAll("Prefabs/Buildings");
-
-        foreach (Object foundObject in myBuildings)
+        myBuildings.Clear();
+        foreach (Object foundObject in Resources.LoadAll("Prefabs/Buildings"))
         {
-            //generatedObjects.Add(foundObject as GameObject);
-            buildings.Add(buildings.Count, foundObject as GameObject);
+            myBuildings.Add(foundObject as GameObject);
         }
-
+        
     }
     
     public void ReloadMap()
@@ -141,10 +141,10 @@ public class ObjectPool
             {
                 myTileData.myData.Add(new TileData());
 
-                for (int j = 0; j < objectTiles.Count; j++)
+                for (int j = 0; j < myTiles.Count; j++)
                 {
 
-                    if (placedTiles[i].name == objectTiles[j].name)
+                    if (placedTiles[i].name == myTiles[j].name)
                     {
                         myTileData.myData[i].ID = i;
                         myTileData.myData[i].ObjectID = j;
@@ -153,7 +153,7 @@ public class ObjectPool
                         myTileData.myData[i].xArrayPos = (int)placedTiles[i].transform.position.x;
                         myTileData.myData[i].myFloorNum = (int)placedTiles[i].transform.position.y;
                         myTileData.myData[i].zArrayPos = (int)placedTiles[i].transform.position.z;
-                        myTileData.myData[i].gridPos = new Vector3Int(myTileData.myData[i].xArrayPos, myTileData.myData[i].myFloorNum, myTileData.myData[i].zArrayPos);
+                        //myTileData.myData[i].gridPos = new Vector3Int((int)myTileData.myData[i].xArrayPos, myTileData.myData[i].myFloorNum, (int)myTileData.myData[i].zArrayPos);
 
 
                         myTileData.myData[i].myRotation = placedTiles[i].transform.rotation;

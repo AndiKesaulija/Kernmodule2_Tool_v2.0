@@ -34,17 +34,23 @@ public class StateMachine
     {
         currentState?.OnExit();
         currentState = states[type];
+        myMapMaker.myObjectPool.ReloadAssets();
         currentState?.OnEnter();
     }
     public void AddState(State state, int name)//Add new state to Dictionary
     {
         states.Add(name, state);
     }
+    public void Load()
+    {
+        currentState?.OnPopUp(0);
+    }
     public void Save()
     {
-        currentState?.OnPopUp();
-        //currentState?.OnSave("KEK");
+        currentState?.OnPopUp(1);
     }
+    
+
 
 
 

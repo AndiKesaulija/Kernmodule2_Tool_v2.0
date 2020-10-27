@@ -11,19 +11,19 @@ public class Events
     protected Quaternion tempRotation;
     public GameObject myParentObject;
 
-    //Events
-    public Vector3 tempPos;
-    public Vector3Int tempEndPos;
-    public Vector3Int tempStartPos;
-    
+    ////Events
+    //public Vector3 tempPos;
+    //public Vector3 tempEndPos;
+    //public Vector3 tempStartPos;
 
-    public GameObject PlaceObject(GameObject targetObject, Vector3 position, Quaternion rotation, GameObject parentObject)
+
+    public GameObject PlaceObject(Object targetObject, Vector3 position, Quaternion rotation, GameObject parentObject)
     {
         if (targetObject != null)
         {
             //targetObject = UnityEngine.Object.Instantiate(targetObject, position, rotation);
 
-            GameObject newObject = UnityEngine.Object.Instantiate(targetObject, position, rotation);
+            GameObject newObject = UnityEngine.Object.Instantiate(targetObject, position, rotation) as GameObject;
             newObject.name = targetObject.name;
             if (parentObject != null)
             {
@@ -73,51 +73,66 @@ public class Events
     {
         Event curr = Event.current;
         Ray mouseRay = HandleUtility.GUIPointToWorldRay(curr.mousePosition);
-        RaycastHit hit;
 
+        RaycastHit hit;
         //Get vector3 when on ActiveFloor height
-        float drawPlaneHeight = activeFloor;
-        float dstToDrawPlane = (drawPlaneHeight - mouseRay.origin.y) / mouseRay.direction.y;
+        float dstToDrawPlane = (activeFloor - mouseRay.origin.y) / mouseRay.direction.y;
         Vector3 mousePosition = mouseRay.GetPoint(dstToDrawPlane);
-        mousePosition = new Vector3(Mathf.Round(mousePosition.x), Mathf.Round(mousePosition.y), Mathf.Round(mousePosition.z));
+
+        
 
         if (Physics.Raycast(mouseRay, out hit))//if Ray hits something
         {
-            if (hit.collider.tag == "Tile")
+            if (hit.collider.gameObject.GetComponent<Tile>() == true)
             {
-                if (hit.collider.gameObject.GetComponent<Tile>() != null)
+                if(hit.collider.transform.position.y == activeFloor)
                 {
-                    if (hit.collider.transform.position.y == activeFloor)
-                    {
-                        return hit.collider.transform.position;
-                    }
-                    return mousePosition;
+                    //Debug.Log("Hit: " + hit.collider.transform.position);
+                    return hit.collider.transform.position;
                 }
-                return mousePosition;
+                
             }
-            return mousePosition;
-
         }
-        Debug.Log("NoHit");
+        //Debug.Log("MousePosition: " + mousePosition);
+        return mousePosition;
+
+    }
+
+    //public void SetPos(bool start,int activeFloor)
+    //{
+
+    //    if (start == true && GetDataRay(activeFloor) != Vector3.zero)
+    //    {
+    //        tempStartPos = GetDataRay(activeFloor);
+    //        tempEndPos = tempStartPos;
+    //    }
+    //    if (start == false && GetDataRay(activeFloor) != Vector3.zero)
+    //    {
+    //        tempEndPos = GetDataRay(activeFloor);
+    //    }
+    //}
+    public Vector3 SetStartPos(int activeFloor)
+    {
+        if (GetDataRay(activeFloor) != Vector3.zero)
+        {
+            return GetDataRay(activeFloor);
+        }
         return Vector3.zero;
-        
     }
+    //public void SetEndPos(int activeFloor)
+    //{
+    //    if (GetDataRay(activeFloor) != Vector3.zero)
+    //    {
+    //        tempEndPos = GetDataRay(activeFloor);
+    //    }
+    //}
 
-    public void SetStartPos(int activeFloor)
-    {
-        tempStartPos = Vector3Int.FloorToInt(GetDataRay(activeFloor));
-    }
-    public void SetEndPos(int activeFloor)
-    {
-        tempEndPos = Vector3Int.FloorToInt(GetDataRay(activeFloor));
-    }
 
-    
-    
 
-    
 
-   
+
+
+
 
 
 
