@@ -28,25 +28,31 @@ public class ObjectPool
 
     public void ReloadAssets()
     {
-        rotateImageMat = Resources.Load("Materials/PreviewRotation", typeof(Material)) as Material;
-        myMapSaves = Resources.LoadAll<TextAsset>("Saves/Maps/");
-        myBuildingSaves = Resources.LoadAll<TextAsset>("Saves/Buildings/");
+        rotateImageMat = Resources.Load("MapMaker/Materials/PreviewRotation", typeof(Material)) as Material;
+        myMapSaves = Resources.LoadAll<TextAsset>("MapMaker/Saves/Maps/");
+        myBuildingSaves = Resources.LoadAll<TextAsset>("MapMaker/Saves/Buildings/");
 
         myTiles.Clear();
         
-        myTiles.Add(Resources.Load<GameObject>("Prefabs/Tiles/EmptyTile"));//1
-        myTiles.Add(Resources.Load<GameObject>("Prefabs/Tiles/FloorTile"));//2
-        myTiles.Add(Resources.Load<GameObject>("Prefabs/Tiles/WallTile"));//3
+        myTiles.Add(Resources.Load<GameObject>("MapMaker/Prefabs/Tiles/EmptyTile"));//1
+        myTiles.Add(Resources.Load<GameObject>("MapMaker/Prefabs/Tiles/FloorTile"));//2
+        myTiles.Add(Resources.Load<GameObject>("MapMaker/Prefabs/Tiles/WallTile"));//3
 
-        foreach (Object foundObject in Resources.LoadAll("Prefabs/Tiles"))
+        foreach (Object foundObject in Resources.LoadAll("MapMaker/Prefabs/Tiles"))
         {
-            myTiles.Add(foundObject as GameObject);
+            if (!myTiles.Contains(foundObject))
+            {
+                myTiles.Add(foundObject as GameObject);
+            }
         }
 
         myBuildings.Clear();
-        foreach (Object foundObject in Resources.LoadAll("Prefabs/Buildings"))
+        foreach (Object foundObject in Resources.LoadAll("MapMaker/Prefabs/Buildings"))
         {
-            myBuildings.Add(foundObject as GameObject);
+            if (!myBuildings.Contains(foundObject))
+            {
+                myBuildings.Add(foundObject as GameObject);
+            }
         }
         
     }
