@@ -1,52 +1,29 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 
-public class GUIHandler
+public static class GUIHandler
 {
     
-    private List<bool> selectedObjectList = new List<bool>();
-    public int mySelectedObjectID;
+    private static List<bool> selectedObjectList = new List<bool>();
+    //public static int mySelectedObjectID;
 
-    public delegate void MyGUIDelegate(List<Object> items);
-    public MyGUIDelegate MyGUI;
+    public delegate void MyGUIDelegate<T>(List<T> items);
+    public static MyGUIDelegate<UnityEngine.Object> MyGUI;
 
-    public MapMaker myMapMaker;
-    public GUIHandler(MapMaker owner)
-    {
-        myMapMaker = owner;
-    }
+    private static float boxHeight = 300 + 20;
+    private static Vector2 scrollx;
 
-    public void AddItemsToGUI(MyGUIDelegate item)
+    public static void AddItemsToGUI(MyGUIDelegate<UnityEngine.Object> item)
     {
         MyGUI += item;
     }
-    public void MainMenuItems(List<Object> items)
+    public static void ShowObjectList(List<UnityEngine.Object> items, float height)
     {
-
-        if (GUI.Button(new Rect(10, 420, 300, 20), "Load"))
-        {
-            myMapMaker.myStateMachine.Load();//LoadWindow
-        }
-        if (GUI.Button(new Rect(10, 440, 300, 20), "Save"))
-        {
-            myMapMaker.myStateMachine.Save();//SaveWindow
-        }
-        if (GUI.Button(new Rect(10, 460, 300, 20), "Place Mode"))
-        {
-            myMapMaker.myStateMachine.SwithState(1);//PlaceMode
-        }
-        if (GUI.Button(new Rect(10, 480, 300, 20), "Builder Mode"))
-        {
-            myMapMaker.myObjectPool.myTileData = null;
-            myMapMaker.myStateMachine.SwithState(2);//BuilderMode
-        }
-
-    }
-
-    public void ShowObjectList(List<Object> items)
-    {
-
+        GUILayout.BeginArea(new Rect(0, (boxHeight * height), 300, 300));
+        scrollx = EditorGUILayout.BeginScrollView(scrollx);
         if (items != null)
         {
             for (int i = 0; i < items.Count; i++)
@@ -56,63 +33,134 @@ public class GUIHandler
 
                 if (selectedObjectList[i] == true)
                 {
-                    
-                    Debug.Log(this.mySelectedObjectID);
                     for (int k = 0; k < selectedObjectList.Count; k++)
                     {
                         if (k != i)
                         {
                             selectedObjectList[k] = false;
+
                         }
                         else
                         {
-                            this.mySelectedObjectID = i;
+                            MapMaker.mySelectedObjectID = i;
+                            MapMaker.objectSelected = true;
                         }
                     }
                 }
+                
             }
         }
+        bool CheckSelectedObjectList(){
+            foreach(bool obj in selectedObjectList)
+            {
+                if(obj == true)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        if (CheckSelectedObjectList() == false)
+        {
+            MapMaker.objectSelected = false;
+        }
+        EditorGUILayout.EndScrollView();
+        GUILayout.EndArea();
+
     }
-    //public void SwitchFloor(bool up)
-    //{
-    //    if (up == true && myMapMaker.myStateMachine.currentState.mye activeFloor < size - 1)
-    //    {
-    //        activeFloor = activeFloor + floorsize;
-    //    }
-    //    if (up == false && activeFloor > 0)
-    //    {
-    //        activeFloor = activeFloor - floorsize;
-    //    }
 
-    //    for (int i = 0; i < floors.Length; i++)
-    //    {
-    //        if (i > activeFloor)
-    //        {
-    //            floors[i].SetActive(false);
-    //        }
-    //    }
-    //    Debug.Log(activeFloor);
-    //    floors[activeFloor].SetActive(true);
-    //}
-    //public void ToggleBuilding()
-    //{
-    //    for (int i = 0; i < floors.Length; i++)
-    //    {
-    //        floors[i].SetActive(!buildingToggle);
-    //    }
+    public static void MainMenuItems(MapMaker myMapMaker,float height)
+    {
+        GUILayout.BeginArea(new Rect(0, (boxHeight * height), 300, 300));
 
-    //    buildingToggle = !buildingToggle;
-    //    if (floors[activeFloor].activeInHierarchy == false)
-    //    {
-    //        for (int i = 0; i < floors.Length; i++)
-    //        {
-    //            if (i <= activeFloor)
-    //            {
-    //                floors[i].SetActive(true);
-    //            }
-    //        }
+        if (GUILayout.Button("Load"))
+        {
+            myMapMaker.myStateMachine.Load();//LoadWindow
+        }
+        if (GUILayout.Button("Save"))
+        {
+            myMapMaker.myStateMachine.Save();//SaveWindow
+        }
+        if (GUILayout.Button("Place Mode"))
+        {
+            myMapMaker.myStateMachine.SwithState(1);//PlaceMode
+        }
+        if (GUILayout.Button("Builder Mode"))
+        {
+            myMapMaker.myObjectPool.myTileData = null;
+            myMapMaker.myStateMachine.SwithState(2);//BuilderMode
+        }
+        GUILayout.EndArea();
 
-    //    }
+    }
 
-    //}
+    public static void BuilderModeItems(float height)
+    {
+        GUILayout.BeginArea(new Rect(0, (boxHeight * height), 300, 300));
+
+        if (GUILayout.Button("Floor Up"))
+        {
+            if(MapMaker.activefloor < StateBuilderEvents.size - 1)
+            {
+                MapMaker.activefloor = MapMaker.activefloor + StateBuilderEvents.floorsize;
+
+                for (int i = 0; i < StateBuilderEvents.floors.Length; i++)
+                {
+                    if (i > MapMaker.activefloor)
+                    {
+                        StateBuilderEvents.floors[i].SetActive(false);
+                    }
+                }
+                StateBuilderEvents.floors[MapMaker.activefloor].SetActive(true);
+            }
+        }
+        if (GUILayout.Button("Floor Down"))
+        {
+            if (MapMaker.activefloor > 0)
+            {
+                MapMaker.activefloor = MapMaker.activefloor - StateBuilderEvents.floorsize;
+
+                for (int i = 0; i < StateBuilderEvents.floors.Length; i++)
+                {
+                    if (i > MapMaker.activefloor)
+                    {
+                        StateBuilderEvents.floors[i].SetActive(false);
+                    }
+                }
+                StateBuilderEvents.floors[MapMaker.activefloor].SetActive(true);
+            }
+        }
+        if (GUILayout.Button("Toggle Building"))
+        {
+            for (int i = 0; i < StateBuilderEvents.floors.Length; i++)
+            {
+                StateBuilderEvents.floors[i].SetActive(!StateBuilderEvents.buildingToggle);
+            }
+
+            StateBuilderEvents.buildingToggle = !StateBuilderEvents.buildingToggle;
+            if (StateBuilderEvents.floors[MapMaker.activefloor].activeInHierarchy == false)
+            {
+                for (int i = 0; i < StateBuilderEvents.floors.Length; i++)
+                {
+                    if (i <= MapMaker.activefloor)
+                    {
+                        StateBuilderEvents.floors[i].SetActive(true);
+                    }
+                }
+
+            }
+        }
+        GUILayout.EndArea();
+
+    }
+    public static void PlaceModeItems(float height)
+    {
+        GUILayout.BeginArea(new Rect(0, (boxHeight * height), 300, 300));
+
+        if (GUILayout.Button("Clear Map"))
+        {
+            StatePlaceEvents.DestroyPlacedObjects(StatePlaceMode.myMapMaker.myObjectPool.placedObjects);
+        }
+        GUILayout.EndArea();
+    }
 }

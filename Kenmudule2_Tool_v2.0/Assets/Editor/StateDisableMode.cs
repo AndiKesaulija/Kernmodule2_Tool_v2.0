@@ -18,7 +18,7 @@ public class StateDisableMode : State
     {
         Debug.Log("Enter DisableMode");
     }
-    public override void OnUpdate()
+    public override void OnExit()
     {
         throw new System.NotImplementedException();
     }
@@ -26,10 +26,11 @@ public class StateDisableMode : State
     {
         throw new System.NotImplementedException();
     }
-    public override void OnExit()
+    public override void OnUpdate()
     {
         throw new System.NotImplementedException();
     }
+   
     public override void OnPopUp(int windowType)
     {
         throw new System.NotImplementedException();

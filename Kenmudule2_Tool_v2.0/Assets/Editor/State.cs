@@ -14,9 +14,9 @@ public abstract class State
     public abstract List<Object> myItems { get; }
     public abstract TextAsset[] mySaves { get;} 
     public abstract void OnEnter();
+    public abstract void OnExit();
     public abstract void OnUpdate();
     public abstract void OnGUI();
-    public abstract void OnExit();
 
     public abstract void OnPopUp(int windowType);
     public abstract void OnSave(string myString);

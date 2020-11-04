@@ -7,30 +7,25 @@ using UnityEditor;
 
 public class StatePlaceEvents : Events
 {
-    
-    public StatePlaceEvents(MapMaker myMapMaker)
+    public void PlaceBuilding()
     {
-        this.myMapMaker = myMapMaker;
-    }
-    private MapMaker myMapMaker;
+        if (MapMaker.objectSelected == true)
+        {
+            Vector3Int LookDirection = Vector3Int.FloorToInt(tempStartPos - tempEndPos);
+            Quaternion Lookrotation = Quaternion.LookRotation(LookDirection);
 
-    //GUI
-    public List<bool> selectedList = new List<bool>();
-    public int mySelectedBuidlingID;
-    private GameObject mySelectedBuilding;
-    public void PlaceBuilding(Vector3 tempStartPos, Vector3 tempEndPos)
-    {
-        Vector3Int LookDirection = Vector3Int.FloorToInt(tempStartPos - tempEndPos);
-        Quaternion Lookrotation = Quaternion.LookRotation(LookDirection);
+            GameObject newBuilding = PlaceObject(StatePlaceMode.myMapMaker.myObjectPool.myBuildings[MapMaker.mySelectedObjectID], tempStartPos, Lookrotation, null);
 
-        GameObject newBuilding = PlaceObject(myMapMaker.myObjectPool.myBuildings[myMapMaker.myGUIHandler.mySelectedObjectID], tempStartPos, Lookrotation, null);
+            StatePlaceMode.myMapMaker.myObjectPool.placedObjects.Add(newBuilding);
 
-        myMapMaker.myObjectPool.placedObjects.Add(newBuilding);
+        }
 
     }
 
-    public void DestroyPlacedObjects(List<GameObject> myObjects)
+    public static void DestroyPlacedObjects(List<GameObject> myObjects)
     {
+        StatePlaceMode.myMapMaker.myObjectPool.ReloadMap();
+
         foreach (GameObject building in myObjects)
         {
             UnityEngine.Object.DestroyImmediate(building);
@@ -38,8 +33,7 @@ public class StatePlaceEvents : Events
     }
     public void SaveMap(string saveName, string folder, DataWrapper<BuildingData> Data)
     {
-        myMapMaker.myObjectPool.ReloadMap();
-        AssetDatabase.Refresh();
+        StatePlaceMode.myMapMaker.myObjectPool.ReloadMap();
         Object[] mySaves = Resources.LoadAll<TextAsset>("Saves/" + folder + "/");
 
         string path = "Assets/Resources/Saves/" + folder + "/" + saveName + ".txt";
@@ -58,7 +52,7 @@ public class StatePlaceEvents : Events
                     return true;
                 }
             }
-            return false;
+            return false; 
 
         }
 
@@ -74,22 +68,24 @@ public class StatePlaceEvents : Events
 
         writer.Close();
         AssetDatabase.Refresh();
+        StatePlaceMode.myMapMaker.myStateMachine.SwithState(1);//PlaceMode
     }
     public void LoadMap(string saveName)
     {
         //Clear Map
-        myMapMaker.myObjectPool.ReloadMap();
-        DestroyPlacedObjects(myMapMaker.myObjectPool.placedObjects);
+        StatePlaceMode.myMapMaker.myObjectPool.ReloadMap();
+        DestroyPlacedObjects(StatePlaceMode.myMapMaker.myObjectPool.placedObjects);
 
         string path = "Assets/Resources/Saves/Maps/" + saveName + ".txt";
 
         string myFile = File.ReadAllText(path);
 
-        myMapMaker.myObjectPool.myMapData = JsonUtility.FromJson<DataWrapper<BuildingData>>(myFile);
+        StatePlaceMode.myMapMaker.myObjectPool.myMapData = JsonUtility.FromJson<DataWrapper<BuildingData>>(myFile);
 
-        for (int i = 0; i < myMapMaker.myObjectPool.myMapData.myData.Count; i++)
+        for (int i = 0; i < StatePlaceMode.myMapMaker.myObjectPool.myMapData.myData.Count; i++)
         {
-            myMapMaker.myObjectPool.placedObjects.Add(PlaceObject(myMapMaker.myObjectPool.buildings[myMapMaker.myObjectPool.myMapData.myData[i].ID], myMapMaker.myObjectPool.myMapData.myData[i].position, myMapMaker.myObjectPool.myMapData.myData[i].rotation, null));
+            StatePlaceMode.myMapMaker.myObjectPool.placedObjects.Add
+                (PlaceObject(StatePlaceMode.myMapMaker.myObjectPool.myBuildings[StatePlaceMode.myMapMaker.myObjectPool.myMapData.myData[i].ID], StatePlaceMode.myMapMaker.myObjectPool.myMapData.myData[i].position, StatePlaceMode.myMapMaker.myObjectPool.myMapData.myData[i].rotation, null));
 
         }
     }

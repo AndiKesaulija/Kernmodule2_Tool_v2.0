@@ -7,15 +7,8 @@ using System.IO;
 [ExecuteInEditMode]
 public class Events
 {
-    protected Vector3 myTempPos;
-    protected Quaternion tempRotation;
-    public GameObject myParentObject;
-
-    ////Events
-    //public Vector3 tempPos;
-    //public Vector3 tempEndPos;
-    //public Vector3 tempStartPos;
-
+    protected Vector3 tempStartPos;
+    protected Vector3 tempEndPos;
 
     public GameObject PlaceObject(Object targetObject, Vector3 position, Quaternion rotation, GameObject parentObject)
     {
@@ -55,7 +48,7 @@ public class Events
 
         return plane;
     }
-    
+
     public void HideObjects(List<GameObject> myObjects,bool myBool)
     {
         foreach(GameObject foundObjects in myObjects)
@@ -69,14 +62,14 @@ public class Events
         SceneView.FrameLastActiveSceneView();
         Selection.activeGameObject = null;
     }
-    public Vector3 GetDataRay(int activeFloor)
+    protected Vector3 GetDataRay(int activefloor)
     {
         Event curr = Event.current;
         Ray mouseRay = HandleUtility.GUIPointToWorldRay(curr.mousePosition);
 
         RaycastHit hit;
         //Get vector3 when on ActiveFloor height
-        float dstToDrawPlane = (activeFloor - mouseRay.origin.y) / mouseRay.direction.y;
+        float dstToDrawPlane = (activefloor - mouseRay.origin.y) / mouseRay.direction.y;
         Vector3 mousePosition = mouseRay.GetPoint(dstToDrawPlane);
 
         
@@ -85,7 +78,7 @@ public class Events
         {
             if (hit.collider.gameObject.GetComponent<Tile>() == true)
             {
-                if(hit.collider.transform.position.y == activeFloor)
+                if(hit.collider.transform.position.y == activefloor)
                 {
                     //Debug.Log("Hit: " + hit.collider.transform.position);
                     return hit.collider.transform.position;
@@ -97,35 +90,20 @@ public class Events
         return mousePosition;
 
     }
-
-    //public void SetPos(bool start,int activeFloor)
-    //{
-
-    //    if (start == true && GetDataRay(activeFloor) != Vector3.zero)
-    //    {
-    //        tempStartPos = GetDataRay(activeFloor);
-    //        tempEndPos = tempStartPos;
-    //    }
-    //    if (start == false && GetDataRay(activeFloor) != Vector3.zero)
-    //    {
-    //        tempEndPos = GetDataRay(activeFloor);
-    //    }
-    //}
-    public Vector3 SetStartPos(int activeFloor)
+    public void SetStartPos()
     {
-        if (GetDataRay(activeFloor) != Vector3.zero)
+        if (GetDataRay(MapMaker.activefloor) != Vector3.zero)
         {
-            return GetDataRay(activeFloor);
+            tempStartPos = GetDataRay(MapMaker.activefloor);
         }
-        return Vector3.zero;
     }
-    //public void SetEndPos(int activeFloor)
-    //{
-    //    if (GetDataRay(activeFloor) != Vector3.zero)
-    //    {
-    //        tempEndPos = GetDataRay(activeFloor);
-    //    }
-    //}
+    public void SetEndPos()
+    {
+        if (GetDataRay(MapMaker.activefloor) != Vector3.zero)
+        {
+            tempEndPos = GetDataRay(MapMaker.activefloor);
+        }
+    }
 
 
 

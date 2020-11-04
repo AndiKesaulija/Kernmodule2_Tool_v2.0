@@ -8,8 +8,6 @@ public class TileData
     public int ID;
     public int ObjectID;
 
-
-
     public float xArrayPos;
     public int myFloorNum;
     public float zArrayPos;

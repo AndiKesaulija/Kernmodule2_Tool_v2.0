@@ -37,6 +37,38 @@ public static class EventHandler
     {
         eventDictionary[type]?.Invoke();
     }
+
+    public static void myMouseEvents()
+    {
+        Event e = Event.current;
+
+
+        //LeftMouseDown
+        if (MapMaker.mouseDown == false && e.button == 0 && e.isMouse && e.type == UnityEngine.EventType.MouseDown)
+        {
+            RaiseEvent(EventType.ON_MOUSE_DOWN);
+            MapMaker.mouseDown = true;
+        }
+        //LeftMouseDrag
+        if (MapMaker.mouseDown == true && e.type == UnityEngine.EventType.MouseDrag)
+        {
+            RaiseEvent(EventType.ON_MOUSE_DRAG);
+
+        }
+        //LeftMouseUp
+        if (MapMaker.mouseDown == true && e.button == 0 && e.isMouse && e.type == UnityEngine.EventType.MouseUp)
+        {
+
+            RaiseEvent(EventType.ON_MOUSE_UP);
+
+            MapMaker.mouseDown = false;
+        }
+        //RightMouseDown
+        if (e.button == 1 && e.isMouse && e.type == UnityEngine.EventType.MouseDown)
+        {
+
+        }
+    }
 }
 public static class EventHandler<T>
 {
@@ -66,4 +98,8 @@ public static class EventHandler<T>
     {
         eventDictionary[type]?.Invoke(arg);
     }
+
+    
 }
+
+
