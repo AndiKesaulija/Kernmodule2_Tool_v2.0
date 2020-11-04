@@ -8,9 +8,12 @@ using System;
 public class MapMaker : EditorWindow
 {
     public StateMachine myStateMachine;
-    public GUIHandler myGUIHandler;
-
     public ObjectPool myObjectPool = new ObjectPool();
+
+    public static bool objectSelected;
+    public static bool mouseDown = false;
+    public static int activefloor = 0;
+    public static int mySelectedObjectID = 0;
 
     [MenuItem("Window/MapMaker")]
     static void Init()
@@ -21,7 +24,6 @@ public class MapMaker : EditorWindow
     public void OnEnable()
     {
         myStateMachine = new StateMachine(this);
-        myGUIHandler = new GUIHandler(this);
 
         SceneView.duringSceneGui += OnSceneGUI;
 
@@ -39,7 +41,10 @@ public class MapMaker : EditorWindow
 
     public void OnGUI()
     {
-        myStateMachine.currentState.OnGUI();
+        //GUIHandler.MyGUI(myStateMachine.currentState.myItems);
+
+        myStateMachine.currentState?.OnGUI();
+        
     }
 
     public void OnSceneGUI(SceneView scene)

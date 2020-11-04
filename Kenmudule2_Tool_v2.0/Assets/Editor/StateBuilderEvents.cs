@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using UnityEngine;
 using UnityEditor;
 
@@ -9,44 +7,31 @@ using UnityEditor;
 public class StateBuilderEvents : Events
 {
     //Building
-    private static int size = 8;// +2 for Outerring 
-    public int activeFloor = 0;
-    private int floorsize = 1;
+    public static int size = 6 + 2;// +2 for Outerring 
+    public static int floorsize = 1;
 
     public Building myBuilding = new Building(size);
-    private GameObject[] floors = new GameObject[size];
+    public static GameObject[] floors = new GameObject[size];
 
-    private bool buildingToggle = false;
-
-    //UI
-    public List<bool> selectedList = new List<bool>();
-    //public int mySelectedBuidlingID;
-    private GameObject mySelectedBuilding;
-
-
-    public StateBuilderEvents(MapMaker myMapMaker)
-    {
-        this.myMapMaker = myMapMaker;
-    }
-    private MapMaker myMapMaker;
+    public static bool buildingToggle = false;
 
 
     public void CreateNewBuilding(DataWrapper<TileData> BuildingData)
     {
-        activeFloor = 0;
+        MapMaker.activefloor = 0;
 
-        if(myMapMaker.myObjectPool.tempBuilding != null)
+        if(StatePlaceMode.myMapMaker.myObjectPool.tempBuilding != null)
         {
-            DestroyObject(myMapMaker.myObjectPool.tempBuilding);
+            DestroyObject(StatePlaceMode.myMapMaker.myObjectPool.tempBuilding);
         }
-        if (myMapMaker.myObjectPool.RotateImage != null)
+        if (StatePlaceMode.myMapMaker.myObjectPool.rotateImage != null)
         {
-            DestroyObject(myMapMaker.myObjectPool.RotateImage);
+            DestroyObject(StatePlaceMode.myMapMaker.myObjectPool.rotateImage);
         }
 
-        myMapMaker.myObjectPool.tempBuilding = new GameObject("TempBuilding");
-        myMapMaker.myObjectPool.tempBuilding.tag ="Building";
-        myMapMaker.myObjectPool.RotateImage = HandlePreview(myMapMaker.myObjectPool.tempBuilding.transform.position, size / 6, myMapMaker.myObjectPool.buildingRotationMat);
+        StatePlaceMode.myMapMaker.myObjectPool.tempBuilding = new GameObject("TempBuilding");
+        StatePlaceMode.myMapMaker.myObjectPool.tempBuilding.tag ="Building";
+        StatePlaceMode.myMapMaker.myObjectPool.rotateImage = HandlePreview(StatePlaceMode.myMapMaker.myObjectPool.tempBuilding.transform.position, size / 6, StatePlaceMode.myMapMaker.myObjectPool.rotateImageMat);
 
 
 
@@ -57,7 +42,7 @@ public class StateBuilderEvents : Events
             {
 
                 floors[i] = new GameObject("Floor" + i);
-                floors[i].transform.SetParent(myMapMaker.myObjectPool.tempBuilding.transform);
+                floors[i].transform.SetParent(StatePlaceMode.myMapMaker.myObjectPool.tempBuilding.transform);
                 floors[i].SetActive(false);
 
                 for (int j = 0; j < size; j++)
@@ -69,7 +54,7 @@ public class StateBuilderEvents : Events
                        
                         if (i == 0)
                         {
-                            myBuilding.myData[j, i, k].ObjectID = 1;//set Floor0 Objects to floorTile
+                            myBuilding.myData[j, i, k].ObjectID = 1;//FloorTile (Floor 0)
                         }
                         else
                         {
@@ -87,7 +72,7 @@ public class StateBuilderEvents : Events
                         myBuilding.myData[j, i, k].gridPos = new Vector3Int(j, i, k);
 
                         myBuilding.myData[j, i, k].myObject = 
-                            PlaceObject(myMapMaker.myObjectPool.myTiles[myBuilding.myData[j, i, k].ObjectID] as GameObject, new Vector3(myBuilding.myData[j, i, k].xArrayPos, myBuilding.myData[j, i, k].myFloorNum, myBuilding.myData[j, i, k].zArrayPos), Quaternion.identity, floors[activeFloor]);
+                            PlaceObject(StatePlaceMode.myMapMaker.myObjectPool.myTiles[myBuilding.myData[j, i, k].ObjectID] as GameObject, new Vector3(myBuilding.myData[j, i, k].xArrayPos, myBuilding.myData[j, i, k].myFloorNum, myBuilding.myData[j, i, k].zArrayPos), Quaternion.identity, floors[MapMaker.activefloor]);
                         myBuilding.myData[j, i, k].myObject.transform.SetParent(floors[i].transform);
 
                         myBuilding.myData[j, i, k].myRotation = myBuilding.myData[j, i, k].myObject.transform.rotation;
@@ -102,7 +87,7 @@ public class StateBuilderEvents : Events
             for (int i = 0; i < size; i++)
             {
                 floors[i] = new GameObject("Floor" + i);
-                floors[i].transform.SetParent(myMapMaker.myObjectPool.tempBuilding.transform);
+                floors[i].transform.SetParent(StatePlaceMode.myMapMaker.myObjectPool.tempBuilding.transform);
                 floors[i].SetActive(false);
 
                 for (int j = 0; j < size; j++)
@@ -128,7 +113,7 @@ public class StateBuilderEvents : Events
                 myBuilding.myData[BuildingData.myData[l].gridPos.x, BuildingData.myData[l].myFloorNum, BuildingData.myData[l].gridPos.z].ObjectID = BuildingData.myData[l].ObjectID;
 
                 myBuilding.myData[BuildingData.myData[l].gridPos.x, BuildingData.myData[l].myFloorNum, BuildingData.myData[l].gridPos.z].myObject = 
-                    PlaceObject(myMapMaker.myObjectPool.myTiles[BuildingData.myData[l].ObjectID] as GameObject, new Vector3(BuildingData.myData[l].xArrayPos , BuildingData.myData[l].myFloorNum, BuildingData.myData[l].zArrayPos), BuildingData.myData[l].myRotation, floors[BuildingData.myData[l].myFloorNum]);
+                    PlaceObject(StatePlaceMode.myMapMaker.myObjectPool.myTiles[BuildingData.myData[l].ObjectID] as GameObject, new Vector3(BuildingData.myData[l].xArrayPos , BuildingData.myData[l].myFloorNum, BuildingData.myData[l].zArrayPos), BuildingData.myData[l].myRotation, floors[BuildingData.myData[l].myFloorNum]);
 
                 myBuilding.myData[BuildingData.myData[l].gridPos.x, BuildingData.myData[l].myFloorNum, BuildingData.myData[l].gridPos.z].myRotation = 
                     myBuilding.myData[BuildingData.myData[l].gridPos.x, BuildingData.myData[l].myFloorNum, BuildingData.myData[l].gridPos.z].myObject.transform.rotation;
@@ -137,22 +122,26 @@ public class StateBuilderEvents : Events
         }
 
         floors[0].SetActive(true);
-        activeFloor = 1;
+        MapMaker.activefloor = 1;
         floors[1].SetActive(true);
 
     }
-    public void HanleTilePlaceing(int selectedBuildingID , Vector3 tempStartPos, Vector3 tempEndPos)
+    public void HanleTilePlaceing()
     {
-        if(selectedBuildingID == 2)//(temp) Wall ID - [Dragable Tiles]
+        if (MapMaker.objectSelected == true)
         {
-            PlaceTiles(selectedBuildingID, tempStartPos, tempEndPos);
+            if (MapMaker.mySelectedObjectID == 2)//(temp) Wall ID - [Dragable Tiles]
+            {
+                PlaceTiles(MapMaker.mySelectedObjectID);
+            }
+            else//[Single Tiles]
+            {
+                PlaceSingleTile(MapMaker.mySelectedObjectID);
+            }
         }
-        else//[Single Tiles]
-        {
-            PlaceSingleTile(selectedBuildingID, tempStartPos, tempEndPos);
-        }
+      
     }
-    public void PlaceTiles(int selectedBuildingID, Vector3 tempStartPos, Vector3 tempEndPos)// [Dragable Tiles]
+    public void PlaceTiles(int selectedBuildingID)// [Dragable Tiles]
     {
         Vector3 difference = new Vector3();
         Vector3Int tilePosition = new Vector3Int();
@@ -172,7 +161,7 @@ public class StateBuilderEvents : Events
             {
                 
                 tilePosition = Vector3Int.FloorToInt(tempStartPos - (difference / count) * i);
-                Vector3Int myBuildingGridPos = new Vector3Int(tilePosition.x + ((size / 2)), activeFloor, tilePosition.z + ((size / 2)));
+                Vector3Int myBuildingGridPos = new Vector3Int(tilePosition.x + ((size / 2)), MapMaker.activefloor, tilePosition.z + ((size / 2)));
                 myBuildingGridPos.Clamp(new Vector3Int(1, 1, 1), new Vector3Int(size-2, size-2, size-2));//Clamp for empty outer ring
 
                 SetTileData(myBuilding.myData[myBuildingGridPos.x, myBuildingGridPos.y, myBuildingGridPos.z], Lookrotation, selectedBuildingID);
@@ -184,7 +173,7 @@ public class StateBuilderEvents : Events
         tempStartPos = Vector3Int.zero;
         tempEndPos = Vector3Int.zero;
     }
-    public void PlaceSingleTile(int selectedBuildingID, Vector3 tempStartPos, Vector3 tempEndPos)//[Single Tiles]
+    public void PlaceSingleTile(int selectedBuildingID)//[Single Tiles]
     {
         Vector3Int tilePosition = new Vector3Int();
         Quaternion Lookrotation = new Quaternion();
@@ -195,7 +184,7 @@ public class StateBuilderEvents : Events
         Lookrotation = Quaternion.LookRotation(LookDirection);
 
         tilePosition = Vector3Int.FloorToInt(tempStartPos);
-        Vector3Int myBuildingGridPos = new Vector3Int(tilePosition.x + ((size / 2)), activeFloor, tilePosition.z + ((size / 2)));
+        Vector3Int myBuildingGridPos = new Vector3Int(tilePosition.x + ((size / 2)), MapMaker.activefloor, tilePosition.z + ((size / 2)));
         myBuildingGridPos.Clamp(new Vector3Int(1, 1, 1), new Vector3Int(size - 2, size - 2, size - 2));//Clamp for empty outer ring
 
         SetTileData(myBuilding.myData[myBuildingGridPos.x, myBuildingGridPos.y, myBuildingGridPos.z], Lookrotation, selectedBuildingID);
@@ -214,7 +203,7 @@ public class StateBuilderEvents : Events
             tempData.ObjectID = selectedBuildingID;
 
             UnityEngine.GameObject.DestroyImmediate(myBuilding.myData[tempData.gridPos.x, tempData.gridPos.y, tempData.gridPos.z].myObject);//Destroy GameObject.
-            tempData.myObject = PlaceObject(myMapMaker.myObjectPool.myTiles[selectedBuildingID] as GameObject, tilePosition, lookRoation, floors[activeFloor]);//Init New GameObject
+            tempData.myObject = PlaceObject(StatePlaceMode.myMapMaker.myObjectPool.myTiles[selectedBuildingID] as GameObject, tilePosition, lookRoation, floors[MapMaker.activefloor]);//Init New GameObject
             tempData.myRotation = tempData.myObject.transform.rotation;
 
             myBuilding.myData[tempData.gridPos.x, tempData.gridPos.y, tempData.gridPos.z] = tempData;
@@ -235,13 +224,15 @@ public class StateBuilderEvents : Events
         }
         foreach(TileData data in myBuilding.myData)
         {
-            if (data.ObjectID == 0)
+            if (data.ObjectID == 0)//EmptyTile
             {
                 DestroyObject(data.myObject);
             }
             if(data.myObject != null)
             {
                 UnityEngine.GameObject.DestroyImmediate(data.myObject.GetComponent<Tile>());
+                UnityEngine.GameObject.DestroyImmediate(data.myObject.GetComponent<BoxCollider>());
+
             }
         }
 
@@ -277,18 +268,36 @@ public class StateBuilderEvents : Events
         if (CheckObjectList(saveName) == true)//Replace with error message/are you sure
         {
             Debug.Log("OverWrite: " + saveName);
-            PrefabUtility.SaveAsPrefabAsset(myMapMaker.myObjectPool.tempBuilding, "Assets/Resources/Prefabs/Buildings/" + saveName + ".prefab");
+            PrefabUtility.SaveAsPrefabAsset(StatePlaceMode.myMapMaker.myObjectPool.tempBuilding, "Assets/Resources/Prefabs/Buildings/" + saveName + ".prefab");
             writer.Write(myJson);
         }
         else
         {
-            myMapMaker.myObjectPool.buildings.Add(myMapMaker.myObjectPool.buildings.Count,PrefabUtility.SaveAsPrefabAsset(myMapMaker.myObjectPool.tempBuilding, "Assets/Resources/Prefabs/Buildings/" + saveName + ".prefab"));
+            PrefabUtility.SaveAsPrefabAsset(StatePlaceMode.myMapMaker.myObjectPool.tempBuilding, "Assets/Resources/Prefabs/Buildings/" + saveName + ".prefab");
             writer.Write(myJson);
         }
 
         writer.Close();
         AssetDatabase.Refresh();
-        myMapMaker.myStateMachine.SwithState(1);//PlaceMode
+        StatePlaceMode.myMapMaker.myStateMachine.SwithState(1);//PlaceMode
+    }
+
+    public void LoadBuilding(string myString)
+    {
+        string path = "Assets/Resources/Saves/Buildings/" + myString + ".txt";
+
+        string myFile = File.ReadAllText(path);
+
+        DataWrapper<TileData> myBuilding = JsonUtility.FromJson<DataWrapper<TileData>>(myFile);
+
+        if (myBuilding != null)
+        {
+            CreateNewBuilding(myBuilding);
+        }
+        else
+        {
+            Debug.Log("Invalid Save File");
+        }
     }
 
 

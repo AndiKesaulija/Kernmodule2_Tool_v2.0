@@ -7,27 +7,16 @@ using System.Linq;
 [ExecuteInEditMode]
 public class ObjectPool
 {
-
-    //public List<GameObject> objectTiles = new List<GameObject>();
-    public Dictionary<int, GameObject> buildings = new Dictionary<int, GameObject>();
-
-    
-
-
+    public GameObject tempBuilding;
+    public GameObject rotateImage;
+    public Material rotateImageMat;
 
     public List<GameObject> placedObjects = new List<GameObject>();
-    public DataWrapper<BuildingData> myMapData = new DataWrapper<BuildingData>();//wrapper with all PlacedObjects
-
     public List<GameObject> placedFloors = new List<GameObject>();
     public List<GameObject> placedTiles = new List<GameObject>();
-    public DataWrapper<TileData> myTileData = new DataWrapper<TileData>();//wrapper with all TileData
 
-    /// <summary>
-    /// //Kijk Hierboven
-    /// </summary>
-    public GameObject tempBuilding;
-    public GameObject RotateImage;
-    public Material buildingRotationMat;
+    public DataWrapper<TileData> myTileData = new DataWrapper<TileData>();//wrapper with all TileData
+    public DataWrapper<BuildingData> myMapData = new DataWrapper<BuildingData>();//wrapper with all PlacedObjects
 
     public List<Object> myBuildings = new List<Object>();
     public List<Object> myTiles = new List<Object>();
@@ -39,7 +28,7 @@ public class ObjectPool
 
     public void ReloadAssets()
     {
-        buildingRotationMat = Resources.Load("Materials/PreviewRotation", typeof(Material)) as Material;
+        rotateImageMat = Resources.Load("Materials/PreviewRotation", typeof(Material)) as Material;
         myMapSaves = Resources.LoadAll<TextAsset>("Saves/Maps/");
         myBuildingSaves = Resources.LoadAll<TextAsset>("Saves/Buildings/");
 
@@ -77,10 +66,10 @@ public class ObjectPool
         {
             myMapData.myData.Add(new BuildingData());
 
-            for (int j = 0; j < buildings.Count; j++)
+            for (int j = 0; j < myBuildings.Count; j++)
             {
 
-                if(placedObjects[i].name == buildings[j].name)
+                if(placedObjects[i].name == myBuildings[j].name)
                 {
                     myMapData.myData[i].ID = j;
                     Debug.Log(myMapData.myData[i].ID);
